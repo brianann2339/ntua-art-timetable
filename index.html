@@ -77,6 +77,22 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
 .btn.primary:hover{filter:brightness(1.08)}
 .savechip{font-size:12px;color:var(--ink-3);font-family:var(--f-mono);min-width:66px;text-align:right}
+.whochip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);
+  border-radius:999px;padding:3px 10px;font-size:12px;font-weight:500}
+.whochip button{border:0;background:transparent;color:inherit;font-size:14px;line-height:1;padding:0 2px;border-radius:5px}
+.whochip button:hover{background:rgba(0,0,0,.08)}
+#dlgList{width:min(560px,calc(100% - 24px));max-height:min(86vh,720px);flex-direction:column;overflow:hidden}
+#dlgList[open]{display:flex}
+.pl-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;flex:1 1 auto}
+.pl-row{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:9px;padding:9px 11px}
+.pl-row .pl-main{flex:1 1 auto;min-width:0}
+.pl-row .pl-nm{font-size:14px;font-weight:600}
+.pl-row .pl-mt{font-size:11px;color:var(--ink-3);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 10px}
+.pl-row .lock{color:var(--warn)}
+.pl-row .acts{display:flex;gap:6px;flex:0 0 auto}
+.pl-empty{color:var(--ink-3);font-size:13px;text-align:center;padding:26px 10px;line-height:1.7}
+.errline{color:var(--crit);font-size:12px;margin-top:-4px;margin-bottom:8px;min-height:16px}
 
 /* dashboard */
 .dash{position:sticky;top:0;z-index:40;background:var(--bg);
@@ -242,9 +258,12 @@ dialog:not([open]){display:none!important}
         <label for="cohort">入學學年度</label>
         <input id="cohort" type="number" min="100" max="130" step="1" value="113" inputmode="numeric">
       </div>
+      <button class="btn primary" id="btnSavePlan">儲存課表</button>
+      <button class="btn" id="btnBrowse">已存課表</button>
       <button class="btn" id="btnExport">匯出備份</button>
       <button class="btn" id="btnImport">匯入備份</button>
       <input type="file" id="fileIn" accept="application/json,.json" hidden>
+      <span id="whoBox" hidden></span>
       <span class="savechip" id="saveChip">—</span>
     </div>
   </header>
@@ -305,6 +324,40 @@ dialog:not([open]){display:none!important}
     <button class="btn" id="btnAdd" style="margin-left:auto">＋ 自訂課程</button>
   </div>
 </dialog>
+
+<dialog id="dlgList" aria-label="已存課表">
+  <div class="pk-head">
+    <div class="pkh"><h3>已存課表</h3><span class="pksub" id="plSub"></span>
+      <button class="close" id="plClose" aria-label="關閉">×</button></div>
+    <input class="search" id="plQ" type="search" placeholder="用姓名搜尋…" autocomplete="off">
+  </div>
+  <div class="pl-list" id="plList"></div>
+  <div class="pk-foot"><span class="hint" id="plHint"></span></div>
+</dialog>
+
+<dialog id="dlgSave"><form method="dialog" class="dlg" id="formSave" novalidate>
+  <h3 id="svTitle">儲存課表</h3>
+  <div class="fr"><label for="svName">姓名</label><input id="svName" placeholder="例：莊家旅" autocomplete="name"></div>
+  <div class="fr"><label for="svPin">4 位數字密碼（選填，之後修改或刪除要用）</label>
+    <input id="svPin" inputmode="numeric" maxlength="4" placeholder="例：1234"></div>
+  <div class="errline" id="svErr"></div>
+  <div class="acts">
+    <button class="btn" type="button" id="svCancel">取消</button>
+    <button class="btn" type="button" id="svNew" hidden>另存新的一筆</button>
+    <button class="btn primary" type="button" id="svOk">儲存</button>
+  </div>
+</form></dialog>
+
+<dialog id="dlgPin"><form method="dialog" class="dlg" id="formPin" novalidate>
+  <h3 id="pinTitle">輸入密碼</h3>
+  <div class="fr"><label for="pinVal">這筆課表設了 4 位數字密碼</label>
+    <input id="pinVal" inputmode="numeric" maxlength="4" placeholder="1234"></div>
+  <div class="errline" id="pinErr"></div>
+  <div class="acts">
+    <button class="btn" type="button" id="pinCancel">取消</button>
+    <button class="btn primary" type="button" id="pinOk">確定</button>
+  </div>
+</form></dialog>
 
 <dialog id="dlgAdd"><form method="dialog" class="dlg" id="formAdd" novalidate>
   <h3 id="dlgTitle">自訂課程</h3>
@@ -399,7 +452,7 @@ const PLAN_LABEL = "本學期＋未來";
 
 /* ===== 狀態 ===== */
 const KEY = "ntua-fa-board-v1";
-let state = { v:3, cohort:113, place:{}, cat:{}, doneOv:{}, custom:[], check:{}, split:{}, updatedAt:0 };
+let state = { v:4, cohort:113, place:{}, cat:{}, doneOv:{}, custom:[], check:{}, split:{}, savedAs:null, updatedAt:0 };
 let ui = { q:"", filter:"all", target:null };
 let cap = null, saveTimer = null;
 
@@ -585,8 +638,8 @@ function boot(){
   if(local) state = Object.assign(state, local);
   if(!state.split) state.split = {};
   for(const [id,z] of Object.entries(state.place)) if(!isSem(z)) delete state.place[id];
-  setChip("自動儲存於此瀏覽器", true);
-  render();
+  setChip(cloudOn() ? "雲端存檔" : "自動存於本機", true);
+  render(); refreshWho();
 }
 
 function move(id, zone){
@@ -714,6 +767,201 @@ el("fileIn").addEventListener("change", async e=>{
     state = Object.assign(state, j); render(); save();
   }catch(err){ alert("讀不出這個檔案，請確認是本頁「匯出備份」產生的 JSON。"); }
   e.target.value = "";
+});
+
+
+/* ================= 課表存檔（雲端 / 本機） ================= */
+/* 部署 Google Apps Script 後，把網頁應用程式網址填進這一行的引號中間 */
+const CLOUD_URL = "";
+const cloudOn = () => !!CLOUD_URL;
+
+async function api(op, payload){
+  const r = await fetch(CLOUD_URL, {
+    method:"POST", redirect:"follow",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(Object.assign({op}, payload||{}))
+  });
+  if(!r.ok) throw new Error("連線失敗（HTTP "+r.status+"）");
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || "操作失敗");
+  return j;
+}
+
+const LKEY = "ntua-fa-plans";
+function lAll(){ try{ return JSON.parse(localStorage.getItem(LKEY)) || {}; }catch(e){ return {}; } }
+function lWrite(o){ try{ localStorage.setItem(LKEY, JSON.stringify(o)); }catch(e){} }
+const newId = () => "p" + Date.now().toString(36) + Math.floor(Math.random()*1e5).toString(36);
+
+function snapshot(){
+  const t = tally();
+  return {
+    cohort: state.cohort, place: state.place, cat: state.cat,
+    doneOv: state.doneOv, custom: state.custom, check: state.check,
+    done: t.done, plan: t.plan
+  };
+}
+function applySnapshot(d){
+  state.cohort = d.cohort || 113;
+  state.place  = d.place  || {};
+  state.cat    = d.cat    || {};
+  state.doneOv = d.doneOv || {};
+  state.custom = d.custom || [];
+  state.check  = d.check  || {};
+}
+
+const store = {
+  async list(){
+    if(cloudOn()) return (await api("list")).plans;
+    return Object.values(lAll())
+      .map(r=>({id:r.id,name:r.name,cohort:r.cohort,done:r.done,plan:r.plan,updatedAt:r.updatedAt,hasPin:!!r.pin}))
+      .sort((a,b)=>b.updatedAt-a.updatedAt);
+  },
+  async get(id, pin){
+    if(cloudOn()) return (await api("get",{id,pin})).plan;
+    const r = lAll()[id];
+    if(!r) throw new Error("找不到這筆課表");
+    if(r.pin && r.pin !== pin) throw new Error("密碼不對");
+    return r;
+  },
+  async save(rec){
+    if(cloudOn()) return await api("save", rec);
+    const all = lAll();
+    const id = rec.id || newId();
+    const old = all[id];
+    if(old && old.pin && old.pin !== rec.pin) throw new Error("密碼不對，無法覆蓋這筆課表");
+    all[id] = Object.assign({}, rec, {id, updatedAt: Date.now()});
+    lWrite(all);
+    return {id};
+  },
+  async del(id, pin){
+    if(cloudOn()) return await api("delete",{id,pin});
+    const all = lAll(); const r = all[id];
+    if(r && r.pin && r.pin !== pin) throw new Error("密碼不對");
+    delete all[id]; lWrite(all); return {ok:true};
+  }
+};
+
+/* ---- 目前載入的是誰的課表 ---- */
+function refreshWho(){
+  const box = el("whoBox");
+  if(state.savedAs && state.savedAs.name){
+    box.hidden = false;
+    box.innerHTML = `<span class="whochip">${esc(state.savedAs.name)} 的課表
+      <button id="whoX" title="改成新的一份" aria-label="改成新的一份">×</button></span>`;
+    el("whoX").onclick = ()=>{ state.savedAs=null; refreshWho(); save(); };
+  } else { box.hidden = true; box.innerHTML = ""; }
+}
+
+/* ---- 密碼小視窗 ---- */
+let pinResolve = null;
+function askPin(title){
+  el("pinTitle").textContent = title;
+  el("pinVal").value = ""; el("pinErr").textContent = "";
+  el("dlgPin").showModal();
+  setTimeout(()=>el("pinVal").focus(), 40);
+  return new Promise(res => { pinResolve = res; });
+}
+function closePin(v){ if(pinResolve){ const r=pinResolve; pinResolve=null; r(v); } el("dlgPin").close(); }
+el("pinCancel").addEventListener("click", ()=>closePin(null));
+el("pinOk").addEventListener("click", ()=>{
+  const v = el("pinVal").value.trim();
+  if(!/^\d{4}$/.test(v)){ el("pinErr").textContent = "請輸入 4 位數字"; return; }
+  closePin(v);
+});
+el("dlgPin").addEventListener("close", ()=>{ if(pinResolve){ const r=pinResolve; pinResolve=null; r(null); } });
+
+/* ---- 儲存課表 ---- */
+function openSave(){
+  const upd = !!(state.savedAs && state.savedAs.id);
+  el("svTitle").textContent = upd ? "更新課表" : "儲存課表";
+  el("svName").value = upd ? state.savedAs.name : "";
+  el("svPin").value = ""; el("svErr").textContent = "";
+  el("svNew").hidden = !upd;
+  el("svOk").textContent = upd ? "更新這一筆" : "儲存";
+  el("dlgSave").showModal();
+  setTimeout(()=>el("svName").focus(), 40);
+}
+async function doSave(asNew){
+  const name = el("svName").value.trim();
+  const pin  = el("svPin").value.trim();
+  if(!name){ el("svErr").textContent = "請填姓名"; el("svName").focus(); return; }
+  if(pin && !/^\d{4}$/.test(pin)){ el("svErr").textContent = "密碼要剛好 4 位數字，不設就留空"; return; }
+  const id = (!asNew && state.savedAs) ? state.savedAs.id : null;
+  el("svErr").textContent = "儲存中…";
+  try{
+    const rec = Object.assign({ id, name, pin }, snapshot());
+    const res = await store.save(rec);
+    state.savedAs = { id: res.id, name };
+    el("dlgSave").close();
+    refreshWho(); save();
+    setChip("已儲存 ✓", false);
+  }catch(err){ el("svErr").textContent = err.message || "儲存失敗"; }
+}
+el("btnSavePlan").addEventListener("click", openSave);
+el("svCancel").addEventListener("click", ()=>el("dlgSave").close());
+el("svOk").addEventListener("click", ()=>doSave(false));
+el("svNew").addEventListener("click", ()=>doSave(true));
+
+/* ---- 已存課表清單 ---- */
+let plans = [], plQ = "";
+function renderPlans(){
+  const q = plQ.trim().toLowerCase();
+  const rows = plans.filter(p => !q || (p.name||"").toLowerCase().includes(q));
+  el("plSub").textContent = `共 ${plans.length} 筆`;
+  el("plList").innerHTML = rows.length ? rows.map(p=>{
+    const d = new Date(p.updatedAt||0);
+    const when = isNaN(d) ? "" : `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    return `<div class="pl-row">
+      <div class="pl-main">
+        <div class="pl-nm">${esc(p.name||"（未命名）")}${p.hasPin?' <span class="lock" title="有密碼">🔒</span>':""}</div>
+        <div class="pl-mt"><span>${p.cohort||"—"} 級</span>
+          <span>已修 ${fmt(p.done||0)}　${PLAN_LABEL} ${fmt(p.plan||0)}</span>
+          <span>${when}</span></div>
+      </div>
+      <div class="acts">
+        <button class="btn" data-load="${p.id}">載入</button>
+        <button class="btn" data-del="${p.id}">刪除</button>
+      </div></div>`;
+  }).join("") : `<div class="pl-empty">${plans.length ? "沒有符合的姓名" : "還沒有人存過課表。<br>排好課之後按右上角「儲存課表」就會出現在這裡。"}</div>`;
+}
+async function openList(){
+  plQ = ""; el("plQ").value = "";
+  el("plSub").textContent = "讀取中…";
+  el("plList").innerHTML = `<div class="pl-empty">讀取中…</div>`;
+  el("plHint").textContent = cloudOn() ? "存在雲端，換裝置也叫得出來" : "存在這台電腦的瀏覽器裡";
+  el("dlgList").showModal();
+  try{ plans = await store.list(); renderPlans(); }
+  catch(err){ el("plList").innerHTML = `<div class="pl-empty">讀不到清單：${esc(err.message||"連線失敗")}</div>`; }
+}
+el("btnBrowse").addEventListener("click", openList);
+el("plClose").addEventListener("click", ()=>el("dlgList").close());
+el("plQ").addEventListener("input", e=>{ plQ = e.target.value; renderPlans(); });
+el("dlgList").addEventListener("click", async e=>{
+  const ld = e.target.closest("[data-load]");
+  const dl = e.target.closest("[data-del]");
+  if(!ld && !dl) return;
+  const id = (ld||dl).dataset.load || (ld||dl).dataset.del;
+  const meta = plans.find(p=>p.id===id);
+  let pin = null;
+  if(meta && meta.hasPin){
+    pin = await askPin(ld ? `載入「${meta.name}」的課表` : `刪除「${meta.name}」的課表`);
+    if(pin === null) return;
+  }
+  try{
+    if(ld){
+      const rec = await store.get(id, pin);
+      applySnapshot(rec.data ? rec.data : rec);
+      state.savedAs = { id: rec.id || id, name: rec.name || (meta&&meta.name) || "" };
+      el("dlgList").close();
+      render(); refreshWho(); save();
+      setChip("已載入 ✓", false);
+    } else {
+      if(!confirm(`確定要刪掉「${meta?meta.name:""}」這筆課表嗎？刪了救不回來。`)) return;
+      await store.del(id, pin);
+      if(state.savedAs && state.savedAs.id === id){ state.savedAs = null; refreshWho(); save(); }
+      plans = await store.list(); renderPlans();
+    }
+  }catch(err){ alert(err.message || "操作失敗"); }
 });
 
 const dashEl = document.querySelector(".dash");
