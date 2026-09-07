@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="國立臺灣藝術大學美術學系碩士在職專班的畢業學分規劃工具：把課排進各學期，即時算出還差幾學分。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EFF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F141A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A8%3C/text%3E%3C/svg%3E">
+<title>美術碩專修課盤</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<style>
+:root{
+  --bg:#EFF1F4; --surface:#FFFFFF; --surface-2:#F6F8FA; --surface-3:#E9EDF2;
+  --line:#D6DCE4; --line-strong:#B9C3CF;
+  --ink:#15202B; --ink-2:#586675; --ink-3:#8794A3;
+  --accent:#2A4A9E; --accent-ink:#FFFFFF; --accent-soft:#E3EAF8;
+  --ok:#2E7D5B; --ok-soft:#E1F0E8;
+  --warn:#A96A18; --warn-soft:#F7EDDC;
+  --crit:#AE3A2E; --crit-soft:#F8E5E2;
+  --g-studio:#A96A18; --g-phil:#2A4A9E; --g-hist:#2E7D5B; --g-core:#15202B; --g-none:#6B7788;
+  --shadow:0 1px 2px rgba(21,32,43,.06),0 6px 16px -8px rgba(21,32,43,.18);
+  --f-disp:"Noto Serif TC",Georgia,"Songti TC",serif;
+  --f-body:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F141A; --surface:#171E26; --surface-2:#1D2731; --surface-3:#242F3B;
+    --line:#2B3742; --line-strong:#3B4855;
+    --ink:#E7ECF2; --ink-2:#9CA9B7; --ink-3:#75828F;
+    --accent:#7FA2F0; --accent-ink:#0F141A; --accent-soft:#1F2B47;
+    --ok:#63C193; --ok-soft:#17301F; --warn:#E0A44E; --warn-soft:#33260F;
+    --crit:#E5786A; --crit-soft:#331B18;
+    --g-studio:#E0A44E; --g-phil:#7FA2F0; --g-hist:#63C193; --g-core:#C6D2E0; --g-none:#8C99A8;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 20px -10px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F141A; --surface:#171E26; --surface-2:#1D2731; --surface-3:#242F3B;
+  --line:#2B3742; --line-strong:#3B4855;
+  --ink:#E7ECF2; --ink-2:#9CA9B7; --ink-3:#75828F;
+  --accent:#7FA2F0; --accent-ink:#0F141A; --accent-soft:#1F2B47;
+  --ok:#63C193; --ok-soft:#17301F; --warn:#E0A44E; --warn-soft:#33260F;
+  --crit:#E5786A; --crit-soft:#331B18;
+  --g-studio:#E0A44E; --g-phil:#7FA2F0; --g-hist:#63C193; --g-core:#C6D2E0; --g-none:#8C99A8;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 20px -10px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px 90px}
+header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;
+  padding:24px 0 16px;border-bottom:1px solid var(--line)}
+.brand h1{font-family:var(--f-disp);font-weight:700;font-size:25px;margin:0;letter-spacing:.02em}
+.brand p{margin:4px 0 0;color:var(--ink-2);font-size:12.5px}
+.top-tools{margin-left:auto;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.field{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:6px 10px}
+.field label{font-size:12px;color:var(--ink-2);letter-spacing:.06em}
+.field input{width:56px;border:0;background:transparent;font-family:var(--f-mono);font-size:15px;font-weight:600;text-align:center}
+.field input::-webkit-outer-spin-button,.field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.btn{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:7px 12px;font-size:13px;color:var(--ink-2);transition:.15s}
+.btn:hover{border-color:var(--line-strong);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+.btn.primary:hover{filter:brightness(1.08)}
+.savechip{font-size:12px;color:var(--ink-3);font-family:var(--f-mono);min-width:66px;text-align:right}
+
+/* dashboard */
+.dash{position:sticky;top:0;z-index:40;background:var(--bg);
+  padding:14px 0 12px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.dash-grid{display:grid;grid-template-columns:minmax(240px,300px) 1fr;gap:18px;align-items:start}
+.total{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 16px;box-shadow:var(--shadow)}
+.total .kick{font-size:11px;letter-spacing:.16em;color:var(--ink-3);text-transform:uppercase}
+.total .big{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:2px}
+.total .big b{font-family:var(--f-mono);font-size:32px;font-weight:600;line-height:1.05}
+.total .big span{color:var(--ink-2);font-family:var(--f-mono);font-size:14px}
+.bar{height:10px;border-radius:5px;background:var(--surface-3);overflow:hidden;display:flex;margin:10px 0 7px}
+.bar i{display:block;height:100%;flex:0 0 auto}
+.bar .done{background:var(--accent)}
+.bar .plan{background-color:var(--accent);
+  background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.6) 0 4px,transparent 4px 8px)}
+:root[data-theme="dark"] .bar .plan,
+:root:not([data-theme="light"]) .bar .plan{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.45) 0 4px,transparent 4px 8px)}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--ink-2);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.meters{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:8px 11px}
+.meter .mh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.meter .mn{font-size:12.5px;color:var(--ink-2)}
+.meter .mv{font-family:var(--f-mono);font-size:13px;font-weight:600}
+.meter .ck{color:var(--ok);font-size:12px;margin-right:3px}
+.meter .mt{height:5px;border-radius:3px;background:var(--surface-3);margin-top:7px;overflow:hidden;display:flex}
+.meter .mt i{height:100%;flex:0 0 auto}
+.meter[data-state="ok"] .mv{color:var(--ok)} .meter[data-state="ok"] .mt i.done{background:var(--ok)}
+.meter[data-state="short"] .mv{color:var(--warn)} .meter[data-state="short"] .mt i.done{background:var(--warn)}
+.meter .mt i.done{background:var(--accent)}
+.meter .mt i.plan{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
+:root[data-theme="dark"] .meter .mt i.plan,
+:root:not([data-theme="light"]) .meter .mt i.plan{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.42) 0 3px,transparent 3px 6px)}
+.meter .sub{font-size:10.5px;color:var(--ink-3);margin-top:4px;line-height:1.45}
+.sec-title{font-family:var(--f-disp);font-size:12px;letter-spacing:.1em;color:var(--ink-2);margin:0 0 6px;font-weight:600}
+
+/* board */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.board{display:flex;flex-direction:column;gap:13px}
+.yr-head{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.yr-head b{font-family:var(--f-disp);font-size:15px}
+.yr-head .yrsub{font-size:11.5px;color:var(--ink-3)}
+.yr-head .yrcr{margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.terms{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 14px 14px}
+.term h3{margin:0 0 8px;font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.term h3 .st{font-size:10.5px;padding:1px 7px;border-radius:999px;letter-spacing:.04em;border:0}
+.st.done{background:var(--ok-soft);color:var(--ok)}
+.st.now{background:var(--accent-soft);color:var(--accent)}
+.st.future{background:var(--surface-3);color:var(--ink-3)}
+.term h3 .tcr{margin-left:auto;font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
+.slot{display:flex;flex-direction:column;gap:7px}
+.addrow{width:100%;border:1px dashed color-mix(in srgb,var(--accent) 45%,var(--line));background:var(--surface-2);
+  color:var(--accent);border-radius:9px;padding:9px;font-size:13px;transition:.15s}
+.addrow:hover{background:var(--accent-soft);border-color:var(--accent)}
+
+/* course card */
+.card{background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--g-none);
+  border-radius:9px;padding:8px 10px;position:relative}
+.card[data-g="工作室學群"]{border-left-color:var(--g-studio)}
+.card[data-g="藝術哲學學群"]{border-left-color:var(--g-phil)}
+.card[data-g="藝術史學群"]{border-left-color:var(--g-hist)}
+.card[data-cat="REQ"],.card[data-cat="CRE"],.card[data-cat="THE"]{border-left-color:var(--g-core)}
+.card .nm{font-size:13.5px;font-weight:500;line-height:1.35;padding-right:20px}
+.card .mt{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-top:4px;font-size:11px;color:var(--ink-3)}
+.card .cr{font-family:var(--f-mono);font-weight:600;color:var(--ink-2)}
+.tag{font-size:10.5px;padding:1px 6px;border-radius:5px;background:var(--surface-3);color:var(--ink-2);white-space:nowrap}
+.tag.studio{background:color-mix(in srgb,var(--g-studio) 16%,transparent);color:var(--g-studio)}
+.tag.phil{background:color-mix(in srgb,var(--g-phil) 16%,transparent);color:var(--g-phil)}
+.tag.hist{background:color-mix(in srgb,var(--g-hist) 16%,transparent);color:var(--g-hist)}
+.tag.core{background:var(--surface-3);color:var(--ink)}
+.tag.nc{background:var(--crit-soft);color:var(--crit)}
+.card .row2{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.card select{font-size:11px;padding:2px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink-2)}
+.card .mini{border:1px solid var(--line);background:var(--surface);color:var(--ink-3);border-radius:6px;font-size:10.5px;padding:1px 6px}
+.card .mini:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.card .x{position:absolute;top:3px;right:4px;border:0;background:transparent;color:var(--ink-3);
+  font-size:16px;line-height:1;padding:1px 5px;border-radius:6px}
+.card .x:hover{background:var(--crit-soft);color:var(--crit)}
+
+/* checklist */
+.check{margin-top:20px;padding:16px 18px}
+.check h2{font-family:var(--f-disp);font-size:16px;margin:0 0 4px}
+.check p.note{margin:0 0 12px;font-size:12px;color:var(--ink-3)}
+.check ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:8px}
+.check li{display:flex;gap:9px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:9px;padding:9px 11px;font-size:13px;line-height:1.5}
+.check input[type=checkbox]{margin-top:3px;accent-color:var(--accent);width:15px;height:15px;flex:0 0 auto}
+.check li.on{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+footer.fine{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:11.5px;color:var(--ink-3);line-height:1.7}
+footer.fine a{color:var(--ink-2)}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);
+  padding:0;box-shadow:0 24px 60px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(10,14,20,.5)}
+#dlgPick{width:min(560px,calc(100% - 24px));max-height:min(86vh,760px);flex-direction:column;overflow:hidden}
+#dlgPick[open]{display:flex}
+dialog:not([open]){display:none!important}
+.pk-head{padding:14px 16px 10px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.pk-head .pkh{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.pk-head h3{font-family:var(--f-disp);font-size:16px;margin:0}
+.pk-head .pksub{font-size:12px;color:var(--ink-3)}
+.pk-head .close{margin-left:auto;border:0;background:transparent;color:var(--ink-3);font-size:20px;line-height:1;padding:0 4px;border-radius:6px}
+.pk-head .close:hover{background:var(--surface-3);color:var(--ink)}
+.search{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.pk-list{overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;flex:1 1 auto;-webkit-overflow-scrolling:touch}
+.pk-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--g-none);
+  border-radius:9px;padding:9px 11px;transition:.12s}
+.pk-item:hover{border-color:var(--accent);background:var(--accent-soft)}
+.pk-item[data-g="工作室學群"]{border-left-color:var(--g-studio)}
+.pk-item[data-g="藝術哲學學群"]{border-left-color:var(--g-phil)}
+.pk-item[data-g="藝術史學群"]{border-left-color:var(--g-hist)}
+.pk-item .pi-main{flex:1 1 auto;min-width:0}
+.pk-item .pi-nm{font-size:13.5px;font-weight:500;line-height:1.35}
+.pk-item .pi-mt{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-top:3px;font-size:11px;color:var(--ink-3)}
+.pk-item .plus{flex:0 0 auto;color:var(--accent);font-size:17px;line-height:1}
+.pk-empty{color:var(--ink-3);font-size:13px;text-align:center;padding:26px 10px}
+.pk-foot{border-top:1px solid var(--line);padding:10px 14px;flex:0 0 auto;display:flex;gap:8px;align-items:center}
+.pk-foot .hint{font-size:11.5px;color:var(--ink-3)}
+
+#dlgAdd{max-width:420px;width:calc(100% - 32px)}
+.dlg{padding:18px}
+.dlg h3{font-family:var(--f-disp);margin:0 0 12px;font-size:17px}
+.dlg .fr{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.dlg .fr label{font-size:11.5px;color:var(--ink-2);letter-spacing:.05em}
+.dlg input,.dlg select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.dlg .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+
+.menu{position:fixed;z-index:900;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 16px 40px -12px rgba(0,0,0,.45);padding:6px;max-height:60vh;overflow:auto;min-width:190px}
+.menu button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:7px 9px;border-radius:7px;font-size:13px}
+.menu button:hover{background:var(--surface-2)}
+.menu .hd{font-size:10.5px;letter-spacing:.1em;color:var(--ink-3);padding:6px 9px 3px}
+
+@media (max-width:900px){
+  .dash{position:static}
+  .dash-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .terms{grid-template-columns:1fr}
+  .wrap{padding:0 12px 76px}
+  header.top{padding:18px 0 14px}
+  .top-tools{width:100%;margin-left:0}
+  .total .big b{font-size:28px}
+  #dlgPick{width:100%;max-width:100%;max-height:92vh;margin:auto auto 0;border-radius:16px 16px 0 0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>美術碩專修課盤</h1>
+      <p>國立臺灣藝術大學 美術學系 碩士在職專班 · 依 113 學年度課程科目表</p>
+    </div>
+    <div class="top-tools">
+      <div class="field">
+        <label for="cohort">入學學年度</label>
+        <input id="cohort" type="number" min="100" max="130" step="1" value="113" inputmode="numeric">
+      </div>
+      <button class="btn" id="btnExport">匯出備份</button>
+      <button class="btn" id="btnImport">匯入備份</button>
+      <input type="file" id="fileIn" accept="application/json,.json" hidden>
+      <span class="savechip" id="saveChip">—</span>
+    </div>
+  </header>
+
+  <section class="dash" aria-label="學分進度">
+    <div class="dash-grid">
+      <div class="total">
+        <div class="kick">畢業總學分</div>
+        <div class="big"><b class="mono" id="totDone">0</b><span class="mono" id="totPlan"></span><span class="mono">／ 48</span></div>
+        <div class="bar" aria-hidden="true"><i class="done" id="barDone" style="width:0"></i><i class="plan" id="barPlan" style="width:0"></i></div>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>已修畢</span>
+          <span><i style="background-color:var(--accent);background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.6) 0 3px,transparent 3px 6px)"></i>本學期＋未來</span>
+        </div>
+        <div class="legend" style="margin-top:5px"><span id="remainTxt">尚缺 48 學分</span></div>
+      </div>
+      <div>
+        <p class="sec-title">類別</p>
+        <div class="meters" id="catMeters"></div>
+        <p class="sec-title" style="margin-top:10px">學群下限（碩選修內計）</p>
+        <div class="meters" id="grpMeters"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="board" id="years"></div>
+
+  <section class="panel check">
+    <h2>畢業檢核（非學分項目）</h2>
+    <p class="note">這幾項不計學分，但沒完成一樣不能畢業。</p>
+    <ul id="checkList"></ul>
+  </section>
+
+  <footer class="fine">
+    課程資料來源：<a href="https://aca.ntua.edu.tw/uploads/files/113701.pdf" target="_blank" rel="noopener">國立臺灣藝術大學教務處 113 學年度碩士在職專班美術學系課程科目表</a>（113701.pdf）。<br>
+    畢業總學分 48（含論文 6）；碩必修 6、畢業創作展 3、碩選修 27、跨所選修 3、論文 6，院選修 0–3 可補足差額。學群下限：工作室 12、藝術哲學 3、藝術史 3。<br>
+    課程科目表中 FAA613、FAA729 各有兩門不同科目共用課號，此處依原表照列。實際採計以系辦與教務處審核為準，本頁僅供自行推算。<br>
+    你排的課只存在這台裝置的這個瀏覽器裡，不會上傳到任何伺服器。換裝置或清除瀏覽器資料前，請先用「匯出備份」存成 JSON，再到新裝置「匯入備份」。
+  </footer>
+</div>
+
+<dialog id="dlgPick" aria-label="選課">
+  <div class="pk-head">
+    <div class="pkh"><h3 id="pkTitle">加課</h3><span class="pksub" id="pkSub"></span>
+      <button class="close" id="pkClose" aria-label="關閉">×</button></div>
+    <input class="search" id="q" type="search" placeholder="搜尋科目、課號…" autocomplete="off">
+    <div class="filters" id="filters">
+      <button class="chip" data-f="all" aria-pressed="true">全部</button>
+      <button class="chip" data-f="工作室學群" aria-pressed="false">工作室</button>
+      <button class="chip" data-f="藝術哲學學群" aria-pressed="false">藝術哲學</button>
+      <button class="chip" data-f="藝術史學群" aria-pressed="false">藝術史</button>
+      <button class="chip" data-f="核心" aria-pressed="false">必修/論文</button>
+    </div>
+  </div>
+  <div class="pk-list" id="pkList"></div>
+  <div class="pk-foot">
+    <span class="hint">已經選過的課不會再出現</span>
+    <button class="btn" id="btnAdd" style="margin-left:auto">＋ 自訂課程</button>
+  </div>
+</dialog>
+
+<dialog id="dlgAdd"><form method="dialog" class="dlg" id="formAdd" novalidate>
+  <h3 id="dlgTitle">自訂課程</h3>
+  <div class="fr"><label for="fName">科目名稱</label><input id="fName" placeholder="例：藝術與科技專題"></div>
+  <div class="fr"><label for="fCode">課號／開課單位（選填）</label><input id="fCode" placeholder="例：設計學院"></div>
+  <div class="fr"><label for="fCr">學分</label><input id="fCr" type="number" min="0" max="12" step="0.5" value="3"></div>
+  <div class="fr"><label for="fCat">採計類別</label><select id="fCat">
+    <option value="CRO">碩跨所選修</option><option value="COL">碩院選修</option>
+    <option value="ELE">碩選修</option><option value="REQ">碩必修</option>
+    <option value="NC">下修／不計入畢業學分</option></select></div>
+  <div class="fr"><label for="fGrp">學群</label><select id="fGrp">
+    <option value="—">無</option><option value="工作室學群">工作室學群</option>
+    <option value="藝術哲學學群">藝術哲學學群</option><option value="藝術史學群">藝術史學群</option></select></div>
+  <div class="fr"><label for="fYl">開課方式</label><select id="fYl">
+    <option value="0">學期課（一學期修完）</option><option value="1">學年課（拆成上／下學期各半）</option></select></div>
+  <div class="acts">
+    <button class="btn" type="button" id="dlgDel" hidden>刪除</button>
+    <button class="btn" type="button" id="dlgCancel">取消</button>
+    <button class="btn primary" type="button" id="dlgOk">儲存</button>
+  </div>
+</form></dialog>
+
+<script>
+"use strict";
+/* ===== 課程資料：113 學年度碩士在職專班美術學系課程科目表 ===== */
+const C = (code,name,cr,cat,grp,yl)=>({code,name,cr,cat,grp,yl:!!yl});
+const CATALOG = [
+  C("FAA602","藝術理論與實踐",4,"REQ","—",1),
+  C("FAA601","研究方法",2,"REQ","—"),
+  C("FAA701","畢業創作展",3,"CRE","—"),
+  C("—","碩士論文",6,"THE","—"),
+  C("—","大工房",3,"COL","—",1),
+  C("FAA614","油畫創作",6,"ELE","工作室學群",1),
+  C("FAA608","繪畫創作",6,"ELE","工作室學群",1),
+  C("FAA714","複合媒材",6,"ELE","工作室學群",1),
+  C("FAA729","當代藝術創作專題",4,"ELE","工作室學群",1),
+  C("FAA709","多媒體素材創作",3,"ELE","工作室學群"),
+  C("FAA501","版畫獨立研究專題",2,"ELE","工作室學群"),
+  C("FAA603","大師專業工作坊A",2,"ELE","—"),
+  C("FAA615","大師專業工作坊B",2,"ELE","—"),
+  C("FAA643","當代藝術創作獨立研究",3,"ELE","—"),
+  C("FAA702","西方藝術理論專題",4,"ELE","藝術史學群",1),
+  C("FAA708","繪畫理論研究",4,"ELE","藝術史學群",1),
+  C("FAA609","當代藝術專題",3,"ELE","藝術史學群"),
+  C("FAA611","臺灣藝術專題",3,"ELE","藝術史學群"),
+  C("FAA711","西方藝術史專題",3,"ELE","藝術史學群"),
+  C("FAA631","攝影史與影像理論專題",3,"ELE","藝術史學群"),
+  C("FAA721","遠東視覺文化專題",3,"ELE","藝術史學群"),
+  C("FAA707","文化研究與全球化專題",3,"ELE","藝術史學群"),
+  C("FAA623","現代藝術史專題",3,"ELE","藝術哲學學群"),
+  C("FAA613","藝術理論與評論",2,"ELE","藝術哲學學群"),
+  C("FAA613","藝術管理與文化政策",3,"ELE","藝術哲學學群"),
+  C("FAA627","藝術心理學專題",3,"ELE","藝術哲學學群"),
+  C("FAA705","公共藝術專題",3,"ELE","藝術哲學學群"),
+  C("FAA605","策展專題",3,"ELE","藝術哲學學群"),
+  C("FAA725","裝置藝術",3,"ELE","藝術哲學學群"),
+  C("FAA713","數位與互動藝術美學",3,"ELE","藝術哲學學群"),
+  C("FAA617","大眾文化與藝術",3,"ELE","藝術哲學學群"),
+  C("FAA719","西方美學專題",3,"ELE","藝術哲學學群"),
+  C("FAA727","新媒體藝術專題",3,"ELE","藝術哲學學群"),
+  C("FAA625","聲響藝術與數位影音",3,"ELE","藝術哲學學群"),
+  C("FAA703","藝術社會學專題",3,"ELE","藝術哲學學群"),
+  C("FAA621","建築與環境",3,"ELE","藝術哲學學群"),
+  C("FAA715","藝術與性別研究",3,"ELE","藝術哲學學群"),
+  C("FAA717","藝術與政治專題",3,"ELE","藝術哲學學群"),
+  C("FAA619","身體／行動／表演藝術研究",3,"ELE","藝術哲學學群"),
+  C("FAA729","博物館學專題",3,"ELE","藝術哲學學群"),
+  C("FAA731","藝術人類學專題",3,"ELE","藝術哲學學群"),
+  C("FAA733","藝術哲學專題",3,"ELE","藝術哲學學群"),
+].map((c,i)=>({...c,id:"k"+i}));
+
+const CATS = [
+  {k:"REQ",n:"碩必修",need:6},
+  {k:"CRE",n:"畢業創作展",need:3},
+  {k:"ELE",n:"碩選修",need:27},
+  {k:"CRO",n:"碩跨所選修",need:3},
+  {k:"THE",n:"碩論文",need:6},
+  {k:"COL",n:"碩院選修",need:0,cap:3},
+];
+const CATNAME = Object.fromEntries(CATS.map(c=>[c.k,c.n]).concat([["NC","不計學分"]]));
+const GROUPS = [{k:"工作室學群",need:12},{k:"藝術哲學學群",need:3},{k:"藝術史學群",need:3}];
+const TOTAL_NEED = 48, YEARS_SPAN = 6;
+const CHECKS = [
+  "通過中級以上外語能力檢定（或修畢「研究生英文」2 學分，不計入畢業學分）",
+  "參加研究生評鑑展 第 1 次",
+  "參加研究生評鑑展 第 2 次",
+  "完成論文口試（學位考與畢業創作展同時舉行）",
+  "繳交畢業創作展宣傳品與紀錄資料",
+];
+const GRPCLASS = {"工作室學群":"studio","藝術哲學學群":"phil","藝術史學群":"hist"};
+const PLAN_LABEL = "本學期＋未來";
+
+/* ===== 狀態 ===== */
+const KEY = "ntua-fa-board-v1";
+let state = { v:3, cohort:113, place:{}, cat:{}, doneOv:{}, custom:[], check:{}, split:{}, updatedAt:0 };
+let ui = { q:"", filter:"all", target:null };
+let cap = null, saveTimer = null;
+
+const allCourses = () => CATALOG.concat(state.custom);
+const baseById = id => allCourses().find(c=>c.id===id);
+function EFF(){
+  const out=[];
+  for(const c of allCourses()){
+    if(c.yl){
+      out.push({...c, id:c.id+"#1", base:c.id, half:1, name:c.name+"（上學期）", cr:c.cr/2});
+      out.push({...c, id:c.id+"#2", base:c.id, half:2, name:c.name+"（下學期）", cr:c.cr/2});
+    } else out.push({...c, base:c.id, half:0});
+  }
+  return out;
+}
+const byId = id => EFF().find(c=>c.id===id);
+const catOf = c => state.cat[c.id] || c.cat;
+const zoneOf = c => state.place[c.id] || "lib";
+const fmt = n => (Math.round(n*10)/10).toString();
+
+function nowTerm(){
+  const d=new Date(), y=d.getFullYear(), m=d.getMonth()+1;
+  if(m>=8) return [y-1911,1];
+  if(m<=1) return [y-1912,1];
+  return [y-1912,2];
+}
+const [CY,CT] = nowTerm();
+const semId = (y,t)=>`s${y}-${t}`;
+function semAuto(y,t){ if(y<CY||(y===CY&&t<CT)) return "done"; if(y===CY&&t===CT) return "now"; return "future"; }
+function semDone(y,t){ const k=semId(y,t); return (k in state.doneOv) ? state.doneOv[k] : semAuto(y,t)==="done"; }
+function isSem(z){ return /^s\d+-[12]$/.test(z); }
+function semParts(z){ const m=z.match(/^s(\d+)-([12])$/); return m?[+m[1],+m[2]]:null; }
+function semLabel(z){ const p=semParts(z); return p? `${p[0]} 學年度 第 ${p[1]} 學期` : ""; }
+function nextSem(z){ const p=semParts(z); if(!p) return z; const [y,t]=p;
+  if(t===1) return semId(y,2);
+  return (y+1 <= state.cohort+YEARS_SPAN-1) ? semId(y+1,1) : z; }
+
+/* ===== 計算 ===== */
+function tally(){
+  const t = { done:0, plan:0, cat:{}, grp:{} };
+  CATS.forEach(c=>t.cat[c.k]={done:0,plan:0});
+  GROUPS.forEach(g=>t.grp[g.k]={done:0,plan:0});
+  for(const c of EFF()){
+    const z = zoneOf(c);
+    if(!isSem(z)) continue;
+    const k = catOf(c);
+    if(k==="NC") continue;
+    const p = semParts(z);
+    const bucket = semDone(p[0],p[1]) ? "done" : "plan";
+    t[bucket] += c.cr;
+    if(t.cat[k]) t.cat[k][bucket] += c.cr;
+    if(t.grp[c.grp] && (k==="ELE"||k==="CRO"||k==="COL")) t.grp[c.grp][bucket] += c.cr;
+  }
+  return t;
+}
+
+/* ===== 繪製 ===== */
+const el = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function tags(c,k){
+  const g = c.grp!=="—" ? `<span class="tag ${GRPCLASS[c.grp]}">${esc(c.grp.replace("學群",""))}</span>` : "";
+  const kk = (k==="REQ"||k==="CRE"||k==="THE") ? `<span class="tag core">${CATNAME[k]}</span>`
+           : k==="NC" ? `<span class="tag nc">不計</span>`
+           : k!=="ELE" ? `<span class="tag">${CATNAME[k]}</span>` : "";
+  return g+kk;
+}
+
+function cardHTML(c){
+  const k = catOf(c), base = baseById(c.base);
+  const opts = ["ELE","CRO","COL","NC"].map(o=>`<option value="${o}"${k===o?" selected":""}>${CATNAME[o]}</option>`).join("");
+  const sel = (base && (base.cat==="ELE"||base.custom)) ? `<select data-sel="${c.id}" title="採計類別">${opts}</select>` : "";
+  const mv  = `<button class="mini" data-mv="${c.id}">換學期</button>`;
+  const ed  = (base && base.custom) ? `<button class="mini" data-edit="${c.base}">編輯</button>` : "";
+  return `<article class="card" data-id="${c.id}" data-g="${esc(c.grp)}" data-cat="${k}">
+    <div class="nm">${esc(c.name)}</div>
+    <div class="mt"><span class="mono cr">${fmt(c.cr)} 學分</span>${c.code&&c.code!=="—"?`<span class="mono">${esc(c.code)}</span>`:""}${tags(c,k)}</div>
+    <div class="row2">${sel}${mv}${ed}</div>
+    <button class="x" data-rm="${c.id}" title="移除" aria-label="移除">×</button></article>`;
+}
+
+function renderBoard(){
+  let h = "";
+  for(let i=0;i<YEARS_SPAN;i++){
+    const y = state.cohort + i;
+    let ycr = 0, terms = "";
+    for(const t of [1,2]){
+      const z = semId(y,t);
+      const cs = EFF().filter(c=>zoneOf(c)===z);
+      const cr = cs.reduce((s,c)=>s+(catOf(c)==="NC"?0:c.cr),0);
+      ycr += cr;
+      const auto = semAuto(y,t), done = semDone(y,t);
+      const stCls = done ? "done" : (auto==="now" ? "now" : "future");
+      const stTxt = done ? "已修畢" : (auto==="now" ? "本學期" : "未來");
+      terms += `<div class="term">
+        <h3>${y} 學年度 第 ${t} 學期
+          <button class="st ${stCls}" data-sw="${z}" title="切換已修畢／未修">${stTxt}</button>
+          <span class="tcr">${fmt(cr)} 學分</span></h3>
+        <div class="slot">${cs.map(cardHTML).join("")}
+          <button class="addrow" data-add="${z}">＋ 加課</button></div>
+      </div>`;
+    }
+    h += `<section class="panel"><div class="yr-head"><b>${y} 學年度</b>
+      <span class="yrsub">第 ${i+1} 年</span><span class="yrcr">${fmt(ycr)} 學分</span></div>
+      <div class="terms">${terms}</div></section>`;
+  }
+  el("years").innerHTML = h;
+}
+
+function meterHTML(name, done, plan, need, cap, sub){
+  const den = need || cap || Math.max(1, done+plan);
+  const st = need ? ((done+plan)>=need ? "ok":"short") : "flat";
+  const w = v => Math.min(100, (v/den)*100);
+  return `<div class="meter" data-state="${st}">
+    <div class="mh"><span class="mn">${name}</span>
+      <span class="mv mono">${st==="ok"&&need?'<span class="ck">✓</span>':""}${fmt(done+plan)}${need?` / ${need}`:(cap?` / ${cap}`:"")}</span></div>
+    <div class="mt"><i class="done" style="width:${w(done)}%"></i><i class="done plan" style="width:${w(plan)}%"></i></div>
+    <div class="sub">已修 ${fmt(done)} ／ ${PLAN_LABEL} ${fmt(plan)}${sub?"　· "+sub:""}</div></div>`;
+}
+
+function renderDash(){
+  const t = tally();
+  el("totDone").textContent = fmt(t.done);
+  el("totPlan").textContent = t.plan ? `＋${fmt(t.plan)}（${PLAN_LABEL}）` : "";
+  const dw = Math.min(100,t.done/TOTAL_NEED*100);
+  el("barDone").style.width = dw+"%";
+  el("barPlan").style.width = Math.min(100-dw, t.plan/TOTAL_NEED*100)+"%";
+  const left = TOTAL_NEED - t.done - t.plan;
+  el("remainTxt").textContent = left>0 ? `含${PLAN_LABEL}，還缺 ${fmt(left)} 學分`
+    : (left===0 ? "剛好滿 48 學分" : `超出 ${fmt(-left)} 學分`);
+  el("catMeters").innerHTML = CATS.map(c=>meterHTML(c.n,t.cat[c.k].done,t.cat[c.k].plan,c.need,c.cap,c.sub)).join("");
+  el("grpMeters").innerHTML = GROUPS.map(g=>meterHTML(g.k.replace("學群",""),t.grp[g.k].done,t.grp[g.k].plan,g.need)).join("");
+}
+
+function renderChecks(){
+  el("checkList").innerHTML = CHECKS.map((c,i)=>
+    `<li class="${state.check[i]?"on":""}"><input type="checkbox" id="ck${i}" data-ck="${i}" ${state.check[i]?"checked":""}><label for="ck${i}">${esc(c)}</label></li>`).join("");
+}
+function render(){ renderBoard(); renderDash(); renderChecks(); el("cohort").value = state.cohort;
+  if(el("dlgPick").open) renderPick(); }
+
+/* ===== 選課視窗 ===== */
+function matches(c){
+  const q = ui.q.trim().toLowerCase();
+  if(q && !(c.name.toLowerCase().includes(q) || (c.code||"").toLowerCase().includes(q))) return false;
+  const f = ui.filter;
+  if(f==="all") return true;
+  if(f==="核心") return ["REQ","CRE","THE"].includes(catOf(c));
+  return c.grp===f;
+}
+function renderPick(){
+  const avail = EFF().filter(c=>zoneOf(c)==="lib");
+  const shown = avail.filter(matches);
+  el("pkSub").textContent = `${semLabel(ui.target)}　·　可選 ${avail.length} 門`;
+  el("pkList").innerHTML = shown.length ? shown.map(c=>{
+    const k = catOf(c);
+    return `<button class="pk-item" data-pick="${c.id}" data-g="${esc(c.grp)}">
+      <span class="pi-main"><span class="pi-nm">${esc(c.name)}</span>
+      <span class="pi-mt"><span class="mono" style="font-weight:600;color:var(--ink-2)">${fmt(c.cr)} 學分</span>${c.code&&c.code!=="—"?`<span class="mono">${esc(c.code)}</span>`:""}${tags(c,k)}</span></span>
+      <span class="plus">＋</span></button>`;
+  }).join("") : `<div class="pk-empty">${avail.length? "沒有符合的課程，換個關鍵字或篩選試試" : "所有課程都已經排進去了 🎉"}</div>`;
+}
+function openPick(zone){
+  ui.target = zone; ui.q = ""; el("q").value = "";
+  el("pkTitle").textContent = "加課";
+  renderPick();
+  el("dlgPick").showModal();
+  if(matchMedia("(min-width:700px)").matches) setTimeout(()=>el("q").focus(),40);
+}
+
+/* ===== 儲存 ===== */
+function setChip(txt,dim){ const c=el("saveChip"); c.textContent=txt; c.style.color = dim?"var(--ink-3)":"var(--ok)"; }
+function save(){
+  state.updatedAt = Date.now();
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  setChip("儲存中…",true);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushRemote, 1400);
+}
+function pushRemote(){ setChip("已儲存 ✓", false); }
+function boot(){
+  let local=null;
+  try{ const s=localStorage.getItem(KEY); if(s) local=JSON.parse(s); }catch(e){}
+  if(local) state = Object.assign(state, local);
+  if(!state.split) state.split = {};
+  for(const [id,z] of Object.entries(state.place)) if(!isSem(z)) delete state.place[id];
+  setChip("自動儲存於此瀏覽器", true);
+  render();
+}
+
+function move(id, zone){
+  if(!zone || zone==="lib") delete state.place[id]; else state.place[id]=zone;
+  render(); save();
+}
+
+/* ===== 互動 ===== */
+document.addEventListener("click", e=>{
+  const add = e.target.closest("[data-add]"); if(add){ openPick(add.dataset.add); return; }
+  const pk  = e.target.closest("[data-pick]");
+  if(pk){
+    const id = pk.dataset.pick, c = byId(id), base = baseById(c.base);
+    move(id, ui.target);
+    if(base && base.yl){                       // 學年課：另一半自動排到下一學期
+      const other = c.half===1 ? base.id+"#2" : base.id+"#1";
+      if(!state.place[other]) state.place[other] = c.half===1 ? nextSem(ui.target) : ui.target;
+      render(); save();
+    }
+    renderPick(); return;
+  }
+  const rm = e.target.closest("[data-rm]");  if(rm){ move(rm.dataset.rm,"lib"); return; }
+  const mv = e.target.closest("[data-mv]");  if(mv){ const r=mv.getBoundingClientRect(); openMenu(mv.dataset.mv, r.left, r.bottom+4); return; }
+  const sw = e.target.closest("[data-sw]");  if(sw){ const z=sw.dataset.sw,p=semParts(z); state.doneOv[z]=!semDone(p[0],p[1]); render(); save(); return; }
+  const ed = e.target.closest("[data-edit]");if(ed){ openDlg(ed.dataset.edit); return; }
+});
+document.addEventListener("change", e=>{
+  const s = e.target.closest("[data-sel]"); if(s){ state.cat[s.dataset.sel]=s.value; render(); save(); return; }
+  const ck= e.target.closest("[data-ck]");  if(ck){ state.check[ck.dataset.ck]=ck.checked; render(); save(); return; }
+});
+el("pkClose").addEventListener("click", ()=>el("dlgPick").close());
+el("dlgPick").addEventListener("click", e=>{ if(e.target===el("dlgPick")) el("dlgPick").close(); });
+el("dlgAdd").addEventListener("click", e=>{ if(e.target===el("dlgAdd")) el("dlgAdd").close(); });
+el("q").addEventListener("input", e=>{ ui.q=e.target.value; renderPick(); });
+el("filters").addEventListener("click", e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  ui.filter=b.dataset.f;
+  [...el("filters").children].forEach(c=>c.setAttribute("aria-pressed", c===b));
+  renderPick();
+});
+el("cohort").addEventListener("change", e=>{
+  const v = parseInt(e.target.value,10);
+  if(!v||v<100||v>130){ e.target.value=state.cohort; return; }
+  const shift = v-state.cohort, np={}, nd={};
+  for(const [id,z] of Object.entries(state.place)){ const p=semParts(z); np[id]= p?semId(p[0]+shift,p[1]):z; }
+  for(const [z,val] of Object.entries(state.doneOv)){ const p=semParts(z); if(p) nd[semId(p[0]+shift,p[1])]=val; }
+  state.cohort=v; state.place=np; state.doneOv=nd; render(); save();
+});
+
+/* 換學期選單 */
+let menuEl=null;
+function closeMenu(){ if(menuEl){ menuEl.remove(); menuEl=null; } }
+function openMenu(id,x,y){
+  closeMenu();
+  const cur = state.place[id] || "";
+  let h = `<div class="hd">移到</div>`;
+  for(let i=0;i<YEARS_SPAN;i++){ const yy=state.cohort+i;
+    for(const t of [1,2]){ const z=semId(yy,t);
+      h += `<button data-go="${z}"${z===cur?' style="color:var(--accent);font-weight:600"':""}>${yy} 學年度 第 ${t} 學期</button>`; } }
+  h += `<div class="hd">其他</div><button data-go="lib">從課表移除</button>`;
+  const m=document.createElement("div"); m.className="menu"; m.innerHTML=h;
+  document.body.appendChild(m);
+  const r=m.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(x, innerWidth-r.width-12))+"px";
+  m.style.top  = Math.max(8, Math.min(y, innerHeight-r.height-12))+"px";
+  m.addEventListener("click", ev=>{ const b=ev.target.closest("[data-go]"); if(!b) return; move(id,b.dataset.go); closeMenu(); });
+  menuEl=m;
+  setTimeout(()=>document.addEventListener("pointerdown", onDocDown, {once:true}),0);
+}
+function onDocDown(e){ if(menuEl && !menuEl.contains(e.target)) closeMenu(); }
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeMenu(); });
+
+/* ===== 自訂課程 ===== */
+let editing=null;
+function openDlg(id){
+  editing = id||null;
+  const c = id ? baseById(id) : null;
+  el("dlgTitle").textContent = c ? "編輯課程" : "自訂課程";
+  el("fName").value=c?c.name:""; el("fName").style.borderColor="";
+  el("fCode").value=c?(c.code==="—"?"":c.code):"";
+  el("fCr").value=c?c.cr:3; el("fCat").value=c?c.cat:"CRO"; el("fGrp").value=c?c.grp:"—";
+  el("fYl").value=c&&c.yl?"1":"0";
+  el("dlgDel").hidden=!c;
+  el("dlgAdd").showModal();
+}
+el("btnAdd").addEventListener("click", ()=>openDlg(null));
+el("dlgCancel").addEventListener("click", ()=>el("dlgAdd").close());
+el("dlgOk").addEventListener("click", ()=>{
+  const name = el("fName").value.trim();
+  if(!name){ el("fName").focus(); el("fName").style.borderColor="var(--crit)"; return; }
+  const o = { name, code: el("fCode").value.trim()||"—", cr: parseFloat(el("fCr").value)||0,
+              cat: el("fCat").value, grp: el("fGrp").value, yl: el("fYl").value==="1", custom:true };
+  if(editing){
+    const c = state.custom.find(x=>x.id===editing);
+    if(c) Object.assign(c,o);
+    [editing,editing+"#1",editing+"#2"].forEach(k=>delete state.cat[k]);
+  } else {
+    o.id = "c"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
+    state.custom.push(o);
+  }
+  el("dlgAdd").close(); render(); save();
+});
+el("dlgDel").addEventListener("click", ()=>{
+  if(!editing) return;
+  state.custom = state.custom.filter(c=>c.id!==editing);
+  [editing,editing+"#1",editing+"#2"].forEach(k=>{ delete state.place[k]; delete state.cat[k]; });
+  el("dlgAdd").close(); render(); save();
+});
+
+/* ===== 匯出 ===== */
+el("btnExport").addEventListener("click", ()=>{
+  const data = JSON.stringify(state,null,2);
+  const url = URL.createObjectURL(new Blob([data],{type:"application/json"}));
+  const a = document.createElement("a");
+  a.href = url; a.download = `修課盤_${state.cohort}級_備份.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+});
+el("btnImport").addEventListener("click", ()=>el("fileIn").click());
+el("fileIn").addEventListener("change", async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const j = JSON.parse(await f.text());
+    if(!j || typeof j!=="object" || !("place" in j)) throw new Error("bad");
+    state = Object.assign(state, j); render(); save();
+  }catch(err){ alert("讀不出這個檔案，請確認是本頁「匯出備份」產生的 JSON。"); }
+  e.target.value = "";
+});
+
+const dashEl = document.querySelector(".dash");
+const setDashH = () => document.documentElement.style.setProperty("--dashH", dashEl.offsetHeight+"px");
+if(window.ResizeObserver) new ResizeObserver(setDashH).observe(dashEl);
+setDashH();
+boot();
+</script>
+
+</body>
+</html>
