@@ -127,6 +127,27 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;
 :root[data-theme="dark"] .meter .mt i.plan,
 :root:not([data-theme="light"]) .meter .mt i.plan{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.42) 0 3px,transparent 3px 6px)}
 .meter .sub{font-size:10.5px;color:var(--ink-3);margin-top:4px;line-height:1.45}
+.meter[data-mk]{cursor:help}
+.meter[data-mk].hot{border-color:var(--accent)}
+.pop{position:fixed;z-index:800;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  box-shadow:0 18px 44px -14px rgba(0,0,0,.45);padding:11px 13px;width:min(330px,calc(100vw - 24px));
+  font-size:12.5px;line-height:1.5;max-height:min(60vh,420px);overflow-y:auto}
+.pop h4{margin:0;font-size:13px;font-family:var(--f-disp);display:flex;align-items:baseline;gap:8px}
+.pop h4 em{font-style:normal;margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.pop .grp{margin-top:9px}
+.pop .lbl{font-size:10px;letter-spacing:.1em;color:var(--ink-3);margin-bottom:4px;
+  display:flex;align-items:center;gap:6px}
+.pop .lbl i{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent)}
+.pop .lbl.fut i{background-color:var(--accent);
+  background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.6) 0 2px,transparent 2px 4px)}
+:root[data-theme="dark"] .pop .lbl.fut i,
+:root:not([data-theme="light"]) .pop .lbl.fut i{background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.45) 0 2px,transparent 2px 4px)}
+.pop ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.pop li{display:flex;gap:8px;align-items:baseline}
+.pop li .n{flex:1 1 auto;min-width:0}
+.pop li .s{font-family:var(--f-mono);font-size:11px;color:var(--ink-3);flex:0 0 auto}
+.pop li .c{font-family:var(--f-mono);font-size:11.5px;font-weight:600;color:var(--ink-2);flex:0 0 auto}
+.pop .none{color:var(--ink-3);font-size:12px;padding:4px 0}
 .sec-title{font-family:var(--f-disp);font-size:12px;letter-spacing:.1em;color:var(--ink-2);margin:0 0 6px;font-weight:600}
 
 /* board */
@@ -492,9 +513,9 @@ function nextSem(z){ const p=semParts(z); if(!p) return z; const [y,t]=p;
 
 /* ===== 計算 ===== */
 function tally(){
-  const t = { done:0, plan:0, cat:{}, grp:{} };
-  CATS.forEach(c=>t.cat[c.k]={done:0,plan:0});
-  GROUPS.forEach(g=>t.grp[g.k]={done:0,plan:0});
+  const t = { done:0, plan:0, cat:{}, grp:{}, catI:{}, grpI:{} };
+  CATS.forEach(c=>{ t.cat[c.k]={done:0,plan:0}; t.catI[c.k]=[]; });
+  GROUPS.forEach(g=>{ t.grp[g.k]={done:0,plan:0}; t.grpI[g.k]=[]; });
   for(const c of EFF()){
     const z = zoneOf(c);
     if(!isSem(z)) continue;
@@ -503,8 +524,9 @@ function tally(){
     const p = semParts(z);
     const bucket = semDone(p[0],p[1]) ? "done" : "plan";
     t[bucket] += c.cr;
-    if(t.cat[k]) t.cat[k][bucket] += c.cr;
-    if(t.grp[c.grp] && (k==="ELE"||k==="CRO"||k==="COL")) t.grp[c.grp][bucket] += c.cr;
+    const item = { name:c.name, cr:c.cr, z, done: bucket==="done" };
+    if(t.cat[k]){ t.cat[k][bucket] += c.cr; t.catI[k].push(item); }
+    if(t.grp[c.grp] && (k==="ELE"||k==="CRO"||k==="COL")){ t.grp[c.grp][bucket] += c.cr; t.grpI[c.grp].push(item); }
   }
   return t;
 }
@@ -561,11 +583,12 @@ function renderBoard(){
   el("years").innerHTML = h;
 }
 
-function meterHTML(name, done, plan, need, cap, sub){
+function semShort(z){ const p=semParts(z); return p ? `${p[0]}${p[1]===1?"上":"下"}` : ""; }
+function meterHTML(name, done, plan, need, cap, sub, mk){
   const den = need || cap || Math.max(1, done+plan);
   const st = need ? ((done+plan)>=need ? "ok":"short") : "flat";
   const w = v => Math.min(100, (v/den)*100);
-  return `<div class="meter" data-state="${st}">
+  return `<div class="meter" data-state="${st}"${mk?` data-mk="${mk}" tabindex="0"`:""}>
     <div class="mh"><span class="mn">${name}</span>
       <span class="mv mono">${st==="ok"&&need?'<span class="ck">✓</span>':""}${fmt(done+plan)}${need?` / ${need}`:(cap?` / ${cap}`:"")}</span></div>
     <div class="mt"><i class="done" style="width:${w(done)}%"></i><i class="done plan" style="width:${w(plan)}%"></i></div>
@@ -582,15 +605,16 @@ function renderDash(){
   const left = TOTAL_NEED - t.done - t.plan;
   el("remainTxt").textContent = left>0 ? `含${PLAN_LABEL}，還缺 ${fmt(left)} 學分`
     : (left===0 ? "剛好滿 48 學分" : `超出 ${fmt(-left)} 學分`);
-  el("catMeters").innerHTML = CATS.map(c=>meterHTML(c.n,t.cat[c.k].done,t.cat[c.k].plan,c.need,c.cap,c.sub)).join("");
-  el("grpMeters").innerHTML = GROUPS.map(g=>meterHTML(g.k.replace("學群",""),t.grp[g.k].done,t.grp[g.k].plan,g.need)).join("");
+  el("catMeters").innerHTML = CATS.map(c=>meterHTML(c.n,t.cat[c.k].done,t.cat[c.k].plan,c.need,c.cap,c.sub,"cat:"+c.k)).join("");
+  el("grpMeters").innerHTML = GROUPS.map(g=>meterHTML(g.k.replace("學群",""),t.grp[g.k].done,t.grp[g.k].plan,g.need,null,null,"grp:"+g.k)).join("");
+  lastTally = t;
 }
 
 function renderChecks(){
   el("checkList").innerHTML = CHECKS.map((c,i)=>
     `<li class="${state.check[i]?"on":""}"><input type="checkbox" id="ck${i}" data-ck="${i}" ${state.check[i]?"checked":""}><label for="ck${i}">${esc(c)}</label></li>`).join("");
 }
-function render(){ renderBoard(); renderDash(); renderChecks(); el("cohort").value = state.cohort;
+function render(){ if(typeof hidePop==="function") hidePop(); renderBoard(); renderDash(); renderChecks(); el("cohort").value = state.cohort;
   if(el("dlgPick").open) renderPick(); }
 
 /* ===== 選課視窗 ===== */
@@ -963,6 +987,75 @@ el("dlgList").addEventListener("click", async e=>{
     }
   }catch(err){ alert(err.message || "操作失敗"); }
 });
+
+
+/* ================= 類別／學群 明細浮動視窗 ================= */
+let lastTally = null, popEl = null, popKey = null;
+
+function popItems(mk){
+  if(!lastTally) return null;
+  const [kind, key] = mk.split(":");
+  if(kind==="cat"){
+    const c = CATS.find(x=>x.k===key);
+    return { title:c?c.n:key, need:c?c.need:0, cap:c?c.cap:0,
+             sum:lastTally.cat[key], items:(lastTally.catI[key]||[]) };
+  }
+  const g = GROUPS.find(x=>x.k===key);
+  return { title:key, need:g?g.need:0, cap:0,
+           sum:lastTally.grp[key], items:(lastTally.grpI[key]||[]) };
+}
+function popHTML(mk){
+  const d = popItems(mk); if(!d) return "";
+  const byZ = (a,b)=> (a.z<b.z?-1:a.z>b.z?1:0);
+  const done = d.items.filter(i=>i.done).sort(byZ);
+  const fut  = d.items.filter(i=>!i.done).sort(byZ);
+  const li = i => `<li><span class="n">${esc(i.name)}</span><span class="s">${semShort(i.z)}</span><span class="c">${fmt(i.cr)}</span></li>`;
+  const sec = (label, cls, arr) => arr.length
+    ? `<div class="grp"><div class="lbl ${cls}"><i></i>${label}　${fmt(arr.reduce((s,i)=>s+i.cr,0))} 學分</div><ul>${arr.map(li).join("")}</ul></div>` : "";
+  const tot = d.sum.done + d.sum.plan;
+  const need = d.need ? ` / ${d.need}` : (d.cap ? ` / ${d.cap}` : "");
+  const body = (done.length||fut.length)
+    ? sec("已修畢","",done) + sec(PLAN_LABEL,"fut",fut)
+    : `<div class="none">這一類還沒有排任何課。</div>`;
+  return `<h4>${esc(d.title)}<em>${fmt(tot)}${need}</em></h4>${body}`;
+}
+function showPop(meter){
+  const mk = meter.dataset.mk; if(!mk) return;
+  if(popKey === mk && popEl) return;
+  hidePop();
+  const el2 = document.createElement("div");
+  el2.className = "pop"; el2.innerHTML = popHTML(mk);
+  document.body.appendChild(el2);
+  const r = meter.getBoundingClientRect(), pr = el2.getBoundingClientRect();
+  let left = r.left, top = r.bottom + 8;
+  if(left + pr.width > innerWidth - 10) left = innerWidth - pr.width - 10;
+  if(left < 10) left = 10;
+  if(top + pr.height > innerHeight - 10) top = Math.max(10, r.top - pr.height - 8);
+  el2.style.left = left + "px"; el2.style.top = top + "px";
+  popEl = el2; popKey = mk; meter.classList.add("hot");
+}
+function hidePop(){
+  if(popEl){ popEl.remove(); popEl = null; }
+  popKey = null;
+  document.querySelectorAll(".meter.hot").forEach(m=>m.classList.remove("hot"));
+}
+document.addEventListener("pointerover", e=>{
+  if(e.pointerType === "touch") return;
+  const m = e.target.closest && e.target.closest(".meter[data-mk]");
+  if(m) showPop(m); else if(!(e.target.closest && e.target.closest(".pop"))) hidePop();
+});
+document.addEventListener("pointerdown", e=>{
+  const m = e.target.closest && e.target.closest(".meter[data-mk]");
+  if(m){ if(popKey === m.dataset.mk) hidePop(); else showPop(m); return; }
+  if(!(e.target.closest && e.target.closest(".pop"))) hidePop();
+});
+document.addEventListener("focusin", e=>{
+  const m = e.target.closest && e.target.closest(".meter[data-mk]");
+  if(m) showPop(m);
+});
+window.addEventListener("scroll", hidePop, true);
+window.addEventListener("resize", hidePop);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") hidePop(); });
 
 const dashEl = document.querySelector(".dash");
 const setDashH = () => document.documentElement.style.setProperty("--dashH", dashEl.offsetHeight+"px");
