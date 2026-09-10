@@ -132,6 +132,10 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;
   padding-top:7px;border-top:1px solid var(--line)}
 .pop .warn{font-size:11.5px;margin-top:7px;line-height:1.5}
 .meter[data-mk]{cursor:help}
+.total[data-mk]{cursor:help}
+.total[data-mk].hot{border-color:var(--accent)}
+.pop li.cut .n,.pop li.cut .c{color:var(--crit)}
+.pop li .why{font-size:10px;color:var(--crit);flex:0 0 auto}
 .meter[data-mk].hot{border-color:var(--accent)}
 .pop{position:fixed;z-index:800;background:var(--surface);border:1px solid var(--line);border-radius:11px;
   box-shadow:0 18px 44px -14px rgba(0,0,0,.45);padding:11px 13px;width:min(330px,calc(100vw - 24px));
@@ -437,7 +441,7 @@ dialog:not([open]){display:none!important}
 
   <section class="dash" aria-label="學分進度">
     <div class="dash-grid">
-      <div class="total">
+      <div class="total" data-mk="total" tabindex="0">
         <div class="kick">畢業總學分</div>
         <div class="big"><b class="mono" id="totDone">0</b><span class="mono" id="totPlan"></span><span class="mono">／ 48</span></div>
         <div class="bar" aria-hidden="true"><i class="done" id="barDone" style="width:0"></i><i class="plan" id="barPlan" style="width:0"></i></div>
@@ -660,18 +664,19 @@ function nextSem(z){ const p=semParts(z); if(!p) return z; const [y,t]=p;
 
 /* ===== 計算 ===== */
 function tally(){
-  const t = { done:0, plan:0, cat:{}, grp:{}, catI:{}, grpI:{} };
+  const t = { done:0, plan:0, cat:{}, grp:{}, catI:{}, grpI:{}, ncI:[] };
   CATS.forEach(c=>{ t.cat[c.k]={done:0,plan:0,rawDone:0,rawPlan:0,excess:0}; t.catI[c.k]=[]; });
   GROUPS.forEach(g=>{ t.grp[g.k]={done:0,plan:0}; t.grpI[g.k]=[]; });
   for(const c of EFF()){
     const z = zoneOf(c);
     if(!isSem(z)) continue;
     const k = catOf(c);
-    if(k==="NC") continue;
-    const p = semParts(z);
+    const p0 = semParts(z);
+    if(k==="NC"){ t.ncI.push({ name:c.name, cr:c.cr, z, done: semDone(p0[0],p0[1]), why:"下修／不計" }); continue; }
+    const p = p0;
     const bucket = semDone(p[0],p[1]) ? "done" : "plan";
     t[bucket] += c.cr;
-    const item = { name:c.name, cr:c.cr, z, done: bucket==="done" };
+    const item = { name:c.name, cr:c.cr, z, done: bucket==="done", countedCr:c.cr };
     if(t.cat[k]){ t.cat[k][bucket] += c.cr; t.catI[k].push(item); }
     if(t.grp[c.grp] && (k==="ELE"||k==="CRO"||k==="COL")){ t.grp[c.grp][bucket] += c.cr; t.grpI[c.grp].push(item); }
   }
@@ -685,6 +690,10 @@ function tally(){
     b.excess = (b.done - d) + (b.plan - p);
     t.done -= (b.done - d); t.plan -= (b.plan - p);
     b.done = d; b.plan = p;
+    /* 上限內先認已修畢、再認未來，逐門標出實際採計多少學分 */
+    let left = c.cap;
+    const order = (t.catI[c.k]||[]).slice().sort((x,y)=> (y.done - x.done) || (x.z < y.z ? -1 : x.z > y.z ? 1 : 0));
+    for(const it of order){ const take = Math.max(0, Math.min(it.cr, left)); it.countedCr = take; left -= take; }
   }
   return t;
 }
@@ -1220,6 +1229,16 @@ let lastTally = null, popEl = null, popKey = null;
 
 function popItems(mk){
   if(!lastTally) return null;
+  if(mk === "total"){
+    const items = [], cut = [];
+    for(const c of CATS) for(const it of (lastTally.catI[c.k]||[])){
+      if(it.countedCr > 0) items.push(Object.assign({}, it, { cr: it.countedCr }));
+      if(it.countedCr < it.cr) cut.push(Object.assign({}, it, { cr: it.cr - it.countedCr, why: c.n+"超過上限" }));
+    }
+    for(const it of lastTally.ncI) cut.push(it);
+    return { title:"畢業總學分", need:TOTAL_NEED, cap:0,
+             sum:{done:lastTally.done, plan:lastTally.plan}, items, cut };
+  }
   const [kind, key] = mk.split(":");
   if(kind==="cat"){
     const c = CATS.find(x=>x.k===key);
@@ -1243,8 +1262,13 @@ function popHTML(mk){
   const body = (done.length||fut.length)
     ? sec("已修畢","",done) + sec(PLAN_LABEL,"fut",fut)
     : `<div class="none">這一類還沒有排任何課。</div>`;
+  const cut = (d.cut || []).slice().sort(byZ);
+  const cutSec = cut.length
+    ? `<div class="grp"><div class="lbl" style="color:var(--crit)">不計入 48 學分　${fmt(cut.reduce((s,i)=>s+i.cr,0))} 學分</div>
+       <ul>${cut.map(i=>`<li class="cut"><span class="n">${esc(i.name)}</span><span class="why">${esc(i.why||"")}</span><span class="s">${semShort(i.z)}</span><span class="c">${fmt(i.cr)}</span></li>`).join("")}</ul></div>`
+    : "";
   const w = d.cap ? warnLine(d.sum, d.cap) : "";
-  return `<h4>${esc(d.title)}<em>${fmt(tot)}${need}</em></h4>${body}${w?`<div class="warn">${w}</div>`:""}`;
+  return `<h4>${esc(d.title)}<em>${fmt(tot)}${need}</em></h4>${body}${cutSec}${w?`<div class="warn">${w}</div>`:""}`;
 }
 function showPop(meter){
   const mk = meter.dataset.mk; if(!mk) return;
@@ -1264,20 +1288,20 @@ function showPop(meter){
 function hidePop(){
   if(popEl){ popEl.remove(); popEl = null; }
   popKey = null;
-  document.querySelectorAll(".meter.hot").forEach(m=>m.classList.remove("hot"));
+  document.querySelectorAll(".hot").forEach(m=>m.classList.remove("hot"));
 }
 document.addEventListener("pointerover", e=>{
   if(e.pointerType === "touch") return;
-  const m = e.target.closest && e.target.closest(".meter[data-mk]");
+  const m = e.target.closest && e.target.closest("[data-mk]");
   if(m) showPop(m); else if(!(e.target.closest && e.target.closest(".pop"))) hidePop();
 });
 document.addEventListener("pointerdown", e=>{
-  const m = e.target.closest && e.target.closest(".meter[data-mk]");
+  const m = e.target.closest && e.target.closest("[data-mk]");
   if(m){ if(popKey === m.dataset.mk) hidePop(); else showPop(m); return; }
   if(!(e.target.closest && e.target.closest(".pop"))) hidePop();
 });
 document.addEventListener("focusin", e=>{
-  const m = e.target.closest && e.target.closest(".meter[data-mk]");
+  const m = e.target.closest && e.target.closest("[data-mk]");
   if(m) showPop(m);
 });
 window.addEventListener("scroll", hidePop, true);
