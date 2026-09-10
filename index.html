@@ -257,6 +257,68 @@ dialog:not([open]){display:none!important}
 .menu button:hover{background:var(--surface-2)}
 .menu .hd{font-size:10.5px;letter-spacing:.1em;color:var(--ink-3);padding:6px 9px 3px}
 
+/* ---- 分頁切換 ---- */
+.view{display:none}
+.view.on{display:block}
+
+/* ---- 首頁 ---- */
+.home{max-width:720px;margin:0 auto;padding:56px 0 40px;text-align:center}
+.home .mark{font-family:var(--f-disp);font-size:38px;font-weight:700;letter-spacing:.02em;margin:0}
+.home .sub{color:var(--ink-2);margin:10px 0 4px;font-size:15px}
+.home .src{color:var(--ink-3);font-size:12.5px;margin:0}
+.home .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:34px 0 0;text-align:left}
+.hcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:20px 20px 18px;
+  box-shadow:var(--shadow);cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:6px;
+  text-align:left;font:inherit;color:inherit;width:100%}
+.hcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.hcard .ic{font-size:22px;line-height:1}
+.hcard b{font-family:var(--f-disp);font-size:17px}
+.hcard span{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.hcard em{font-style:normal;font-size:11.5px;color:var(--accent);font-weight:500;margin-top:2px}
+.home .steps{margin:34px 0 0;text-align:left;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:13px;padding:16px 18px}
+.home .steps h3{font-family:var(--f-disp);font-size:13px;margin:0 0 9px;letter-spacing:.06em;color:var(--ink-2)}
+.home .steps ol{margin:0;padding-left:19px;font-size:13px;color:var(--ink-2);line-height:1.85}
+.home .steps ol b{color:var(--ink)}
+
+/* ---- 子頁頭 ---- */
+.subhead{display:flex;align-items:center;gap:12px;padding:22px 0 16px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+.subhead h2{font-family:var(--f-disp);font-size:21px;margin:0}
+.subhead p{margin:2px 0 0;font-size:12.5px;color:var(--ink-3)}
+.back{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 11px;font-size:13px;color:var(--ink-2)}
+.back:hover{border-color:var(--line-strong);color:var(--ink)}
+
+/* ---- 新增表單 ---- */
+.newform{max-width:440px;margin:0 auto;background:var(--surface);border:1px solid var(--line);
+  border-radius:15px;padding:22px 24px;box-shadow:var(--shadow)}
+.newform .fr{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.newform label{font-size:12px;color:var(--ink-2);letter-spacing:.04em}
+.newform label i{font-style:normal;color:var(--ink-3)}
+.newform input{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:15px}
+.newform .hint{font-size:11.5px;color:var(--ink-3);margin-top:-8px;margin-bottom:13px;line-height:1.5}
+.newform .go{width:100%;margin-top:6px;padding:11px}
+
+/* ---- 清單頁 ---- */
+.listwrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.listwrap .search{margin-bottom:6px}
+.src-tag{font-size:10px;padding:1px 6px;border-radius:5px;background:var(--surface-3);color:var(--ink-3);white-space:nowrap}
+.src-tag.repo{background:var(--accent-soft);color:var(--accent)}
+
+/* ---- 引導提示 ---- */
+.guide{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
+  border-radius:13px;padding:14px 16px;margin-bottom:16px;position:relative;font-size:13px;line-height:1.7}
+.guide h3{font-family:var(--f-disp);font-size:14px;margin:0 0 6px;color:var(--accent)}
+.guide ol{margin:6px 0 0;padding-left:19px}
+.guide .gx{position:absolute;top:8px;right:9px;border:0;background:transparent;color:var(--ink-3);font-size:17px;line-height:1;padding:2px 6px;border-radius:6px}
+.guide .gx:hover{background:rgba(0,0,0,.08);color:var(--ink)}
+.idbar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;font-size:12.5px;color:var(--ink-2);margin-top:4px}
+.idbar b{color:var(--ink);font-weight:600}
+
+@media (max-width:640px){
+  .home{padding:34px 0 28px}
+  .home .mark{font-size:30px}
+  .home .cards{grid-template-columns:1fr}
+}
 @media (max-width:900px){
   .dash{position:static}
   .dash-grid{grid-template-columns:1fr}
@@ -273,12 +335,80 @@ dialog:not([open]){display:none!important}
 </style>
 
 <div class="wrap">
+
+<!-- ============ 首頁 ============ -->
+<section class="view" id="viewHome">
+  <div class="home">
+    <h1 class="mark">美術碩專修課盤</h1>
+    <p class="sub">國立臺灣藝術大學 美術學系 碩士在職專班 · 畢業學分推算</p>
+    <p class="src">依教務處 113 學年度課程科目表 · 畢業 48 學分（含論文 6）</p>
+    <div class="cards">
+      <button class="hcard" id="goBrowse">
+        <span class="ic">📂</span>
+        <b>查看已儲存的課表</b>
+        <span>看看學長姐和同學怎麼排的，也可以把自己存過的那份叫回來繼續編輯。</span>
+        <em id="browseCount">讀取中…</em>
+      </button>
+      <button class="hcard" id="goNew">
+        <span class="ic">✏️</span>
+        <b>新增自己的課表</b>
+        <span>填姓名、學號和入學學年度，接著一學期一學期把課排進去，馬上算出還差幾學分。</span>
+        <em>大約 3 分鐘</em>
+      </button>
+    </div>
+    <div class="steps">
+      <h3>怎麼用</h3>
+      <ol>
+        <li><b>填基本資料</b> —— 姓名、學號、入學學年度（民國，例如 113）。</li>
+        <li><b>一學期一學期加課</b> —— 系統會依你的入學學年度長出 6 學年 12 個學期，每格按「＋ 加課」選課。</li>
+        <li><b>看畢業還差多少</b> —— 上方即時顯示 48 學分的進度、各類別和三大學群的下限有沒有達標。</li>
+        <li><b>存起來</b> —— 按「儲存課表」，之後隨時回來繼續改。</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 已儲存的課表 ============ -->
+<section class="view" id="viewList">
+  <div class="subhead">
+    <button class="back" data-nav="home">← 回首頁</button>
+    <div><h2>已儲存的課表</h2><p id="listSub">讀取中…</p></div>
+    <button class="btn primary" data-nav="new" style="margin-left:auto">＋ 新增自己的課表</button>
+  </div>
+  <div class="listwrap">
+    <input class="search" id="lsQ" type="search" placeholder="用姓名或學號搜尋…" autocomplete="off">
+    <div id="lsList"></div>
+  </div>
+</section>
+
+<!-- ============ 新增課表 ============ -->
+<section class="view" id="viewNew">
+  <div class="subhead">
+    <button class="back" data-nav="home">← 回首頁</button>
+    <div><h2>新增自己的課表</h2><p>先填三個基本資料，接著就開始排課。</p></div>
+  </div>
+  <div class="newform">
+    <div class="fr"><label for="nfName">姓名</label><input id="nfName" placeholder="例：莊家焮" autocomplete="name"></div>
+    <div class="fr"><label for="nfSid">學號</label><input id="nfSid" placeholder="例：11321001" autocomplete="off"></div>
+    <div class="fr"><label for="nfCohort">入學學年度 <i>（民國）</i></label>
+      <input id="nfCohort" type="number" min="100" max="130" step="1" placeholder="113" inputmode="numeric"></div>
+    <p class="hint">系統會依這個學年度長出 6 學年、12 個學期的空課表（碩專班修業年限 3～6 年）。</p>
+    <div class="fr"><label for="nfPin">4 位數字密碼 <i>（選填，之後修改或刪除要用）</i></label>
+      <input id="nfPin" inputmode="numeric" maxlength="4" placeholder="1234"></div>
+    <div class="errline" id="nfErr"></div>
+    <button class="btn primary go" id="nfGo">開始排課 →</button>
+  </div>
+</section>
+
+<!-- ============ 課表 ============ -->
+<section class="view" id="viewPlan">
   <header class="top">
     <div class="brand">
-      <h1>美術碩專修課盤</h1>
-      <p>國立臺灣藝術大學 美術學系 碩士在職專班 · 依 113 學年度課程科目表</p>
+      <h1 id="planTitle">美術碩專修課盤</h1>
+      <div class="idbar" id="idBar"></div>
     </div>
     <div class="top-tools">
+      <button class="back" data-nav="home">← 回首頁</button>
       <div class="field">
         <label for="cohort">入學學年度</label>
         <input id="cohort" type="number" min="100" max="130" step="1" value="113" inputmode="numeric">
@@ -292,6 +422,18 @@ dialog:not([open]){display:none!important}
       <span class="savechip" id="saveChip">—</span>
     </div>
   </header>
+
+  <div class="guide" id="guideBox" hidden>
+    <button class="gx" id="guideX" aria-label="關閉說明">×</button>
+    <h3>接下來：把每一學年要修的課填進去</h3>
+    下面是依你的入學學年度長出來的 <b id="gYears">6</b> 學年 12 個學期。
+    <ol>
+      <li>在該學期的格子按 <b>＋ 加課</b>，搜尋或篩選後點課名就加進去。</li>
+      <li>學年課（油畫創作、複合媒材等）選了上學期，下學期會自動排到下一格。</li>
+      <li>已經過去的學期會標成「已修畢」，未來的算「本學期＋未來」，兩者分開計算。</li>
+      <li>排的過程中隨時看上方 <b>48 學分</b>的進度，滑過任何一格類別可以看裡面有哪些課。</li>
+    </ol>
+  </div>
 
   <section class="dash" aria-label="學分進度">
     <div class="dash-grid">
@@ -478,7 +620,7 @@ const PLAN_LABEL = "本學期＋未來";
 
 /* ===== 狀態 ===== */
 const KEY = "ntua-fa-board-v1";
-let state = { v:4, cohort:113, place:{}, cat:{}, doneOv:{}, custom:[], check:{}, split:{}, savedAs:null, updatedAt:0 };
+let state = { v:5, cohort:113, profile:null, place:{}, cat:{}, doneOv:{}, custom:[], check:{}, split:{}, savedAs:null, updatedAt:0 };
 let ui = { q:"", filter:"all", target:null };
 let cap = null, saveTimer = null;
 
@@ -688,7 +830,9 @@ function boot(){
   if(!state.split) state.split = {};
   for(const [id,z] of Object.entries(state.place)) if(!isSem(z)) delete state.place[id];
   setChip(cloudOn() ? "雲端存檔" : "自動存於本機", true);
-  render(); refreshWho();
+  render(); refreshWho(); refreshIdBar(); showGuide(false);
+  const h = location.hash.slice(1);
+  nav(VIEWS.includes(h) ? h : "home");
 }
 
 function move(id, zone){
@@ -735,7 +879,9 @@ el("cohort").addEventListener("change", e=>{
   const shift = v-state.cohort, np={}, nd={};
   for(const [id,z] of Object.entries(state.place)){ const p=semParts(z); np[id]= p?semId(p[0]+shift,p[1]):z; }
   for(const [z,val] of Object.entries(state.doneOv)){ const p=semParts(z); if(p) nd[semId(p[0]+shift,p[1])]=val; }
-  state.cohort=v; state.place=np; state.doneOv=nd; render(); save();
+  state.cohort=v; state.place=np; state.doneOv=nd;
+  if(state.profile) state.profile.cohort=v;
+  render(); refreshIdBar(); save();
 });
 
 /* 換學期選單 */
@@ -800,10 +946,13 @@ el("dlgDel").addEventListener("click", ()=>{
 
 /* ===== 匯出 ===== */
 el("btnExport").addEventListener("click", ()=>{
-  const data = JSON.stringify(state,null,2);
+  const pf = state.profile || {};
+  const rec = Object.assign({ name: pf.name || "未命名", sid: pf.sid || "", updatedAt: Date.now() }, snapshot());
+  const data = JSON.stringify(rec, null, 2);
+  const safe = (pf.sid || pf.name || "plan").replace(/[^\w\u4e00-\u9fff-]/g,"");
   const url = URL.createObjectURL(new Blob([data],{type:"application/json"}));
   const a = document.createElement("a");
-  a.href = url; a.download = `修課盤_${state.cohort}級_備份.json`;
+  a.href = url; a.download = `${safe}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 1500);
 });
@@ -813,7 +962,9 @@ el("fileIn").addEventListener("change", async e=>{
   try{
     const j = JSON.parse(await f.text());
     if(!j || typeof j!=="object" || !("place" in j)) throw new Error("bad");
-    state = Object.assign(state, j); render(); save();
+    applySnapshot(j);
+    if(j.name && !state.profile) state.profile = { name:j.name, sid:j.sid||"", cohort:j.cohort||state.cohort };
+    render(); refreshIdBar(); refreshWho(); save();
   }catch(err){ alert("讀不出這個檔案，請確認是本頁「匯出備份」產生的 JSON。"); }
   e.target.value = "";
 });
@@ -836,6 +987,37 @@ async function api(op, payload){
   return j;
 }
 
+/* 公開課表：直接放在這個 GitHub repo 的 plans/ 資料夾，任何人打開網站都撈得到 */
+const REPO = "brianann2339/ntua-art-timetable";
+const RKEY = "ntua-fa-repo-cache";
+async function repoList(){
+  try{
+    const c = JSON.parse(sessionStorage.getItem(RKEY) || "null");
+    if(c && Date.now() - c.at < 600000) return c.recs;
+  }catch(e){}
+  try{
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/plans`, {cache:"no-store"});
+    if(!r.ok) return [];
+    const files = await r.json();
+    if(!Array.isArray(files)) return [];
+    const picks = files.filter(f=>f.type==="file" && /\.json$/i.test(f.name) && f.name !== "index.json").slice(0,80);
+    const recs = (await Promise.all(picks.map(async f=>{
+      try{
+        const rr = await fetch(f.download_url, {cache:"no-store"});
+        if(!rr.ok) return null;
+        const j = await rr.json();
+        if(!j || typeof j !== "object") return null;
+        return { id:"repo:"+f.name.replace(/\.json$/i,""), name:j.name||f.name.replace(/\.json$/i,""),
+                 sid:j.sid||"", cohort:j.cohort||null, done:j.done||0, plan:j.plan||0,
+                 updatedAt:j.updatedAt||0, hasPin:false, source:"repo", data:j };
+      }catch(e){ return null; }
+    }))).filter(Boolean);
+    try{ sessionStorage.setItem(RKEY, JSON.stringify({at:Date.now(), recs})); }catch(e){}
+    return recs;
+  }catch(e){ return []; }
+}
+let repoCache = [];
+
 const LKEY = "ntua-fa-plans";
 function lAll(){ try{ return JSON.parse(localStorage.getItem(LKEY)) || {}; }catch(e){ return {}; } }
 function lWrite(o){ try{ localStorage.setItem(LKEY, JSON.stringify(o)); }catch(e){} }
@@ -844,13 +1026,14 @@ const newId = () => "p" + Date.now().toString(36) + Math.floor(Math.random()*1e5
 function snapshot(){
   const t = tally();
   return {
-    cohort: state.cohort, place: state.place, cat: state.cat,
+    cohort: state.cohort, profile: state.profile, place: state.place, cat: state.cat,
     doneOv: state.doneOv, custom: state.custom, check: state.check,
     done: t.done, plan: t.plan
   };
 }
 function applySnapshot(d){
   state.cohort = d.cohort || 113;
+  state.profile = d.profile || null;
   state.place  = d.place  || {};
   state.cat    = d.cat    || {};
   state.doneOv = d.doneOv || {};
@@ -860,13 +1043,24 @@ function applySnapshot(d){
 
 const store = {
   async list(){
-    if(cloudOn()) return (await api("list")).plans;
-    return Object.values(lAll())
-      .map(r=>({id:r.id,name:r.name,cohort:r.cohort,done:r.done,plan:r.plan,updatedAt:r.updatedAt,hasPin:!!r.pin}))
-      .sort((a,b)=>b.updatedAt-a.updatedAt);
+    const local = Object.values(lAll())
+      .map(r=>({id:r.id,name:r.name,sid:r.sid||"",cohort:r.cohort,done:r.done,plan:r.plan,
+                updatedAt:r.updatedAt,hasPin:!!r.pin,source:"local"}));
+    let cloud = [];
+    if(cloudOn()){
+      try{ cloud = ((await api("list")).plans||[]).map(x=>Object.assign({source:"cloud"},x)); }catch(e){}
+    }
+    repoCache = await repoList();
+    const repo = repoCache.map(({data, ...m})=>m);
+    return repo.concat(cloud, local).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   },
   async get(id, pin){
-    if(cloudOn()) return (await api("get",{id,pin})).plan;
+    if(String(id).startsWith("repo:")){
+      const r = repoCache.find(x=>x.id===id) || (await repoList()).find(x=>x.id===id);
+      if(!r) throw new Error("找不到這筆課表");
+      return { id:r.id, name:r.name, data:r.data };
+    }
+    if(cloudOn() && !lAll()[id]) return (await api("get",{id,pin})).plan;
     const r = lAll()[id];
     if(!r) throw new Error("找不到這筆課表");
     if(r.pin && r.pin !== pin) throw new Error("密碼不對");
@@ -883,7 +1077,8 @@ const store = {
     return {id};
   },
   async del(id, pin){
-    if(cloudOn()) return await api("delete",{id,pin});
+    if(String(id).startsWith("repo:")) throw new Error("公開課表要在 GitHub 上刪除");
+    if(cloudOn() && !lAll()[id]) return await api("delete",{id,pin});
     const all = lAll(); const r = all[id];
     if(r && r.pin && r.pin !== pin) throw new Error("密碼不對");
     delete all[id]; lWrite(all); return {ok:true};
@@ -923,8 +1118,10 @@ el("dlgPin").addEventListener("close", ()=>{ if(pinResolve){ const r=pinResolve;
 function openSave(){
   const upd = !!(state.savedAs && state.savedAs.id);
   el("svTitle").textContent = upd ? "更新課表" : "儲存課表";
-  el("svName").value = upd ? state.savedAs.name : "";
-  el("svPin").value = ""; el("svErr").textContent = "";
+  const pf = state.profile || {};
+  el("svName").value = upd ? state.savedAs.name : (pf.name || "");
+  el("svPin").value = pf.pin || "";
+  el("svErr").textContent = "";
   el("svNew").hidden = !upd;
   el("svOk").textContent = upd ? "更新這一筆" : "儲存";
   el("dlgSave").showModal();
@@ -938,9 +1135,13 @@ async function doSave(asNew){
   const id = (!asNew && state.savedAs) ? state.savedAs.id : null;
   el("svErr").textContent = "儲存中…";
   try{
-    const rec = Object.assign({ id, name, pin }, snapshot());
+    const sid = (state.profile && state.profile.sid) || "";
+    const rec = Object.assign({ id, name, sid, pin }, snapshot());
     const res = await store.save(rec);
     state.savedAs = { id: res.id, name };
+    if(!state.profile) state.profile = { name, sid:"", cohort:state.cohort };
+    state.profile.name = name; if(pin) state.profile.pin = pin;
+    refreshIdBar();
     el("dlgSave").close();
     refreshWho(); save();
     setChip("已儲存 ✓", false);
@@ -982,7 +1183,7 @@ async function openList(){
   try{ plans = await store.list(); renderPlans(); }
   catch(err){ el("plList").innerHTML = `<div class="pl-empty">讀不到清單：${esc(err.message||"連線失敗")}</div>`; }
 }
-el("btnBrowse").addEventListener("click", openList);
+el("btnBrowse").addEventListener("click", ()=>nav("list"));
 el("plClose").addEventListener("click", ()=>el("dlgList").close());
 el("plQ").addEventListener("input", e=>{ plQ = e.target.value; renderPlans(); });
 el("dlgList").addEventListener("click", async e=>{
@@ -1082,6 +1283,151 @@ document.addEventListener("focusin", e=>{
 window.addEventListener("scroll", hidePop, true);
 window.addEventListener("resize", hidePop);
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") hidePop(); });
+
+
+/* ================= 分頁切換 ================= */
+const VIEWS = ["home","list","new","plan"];
+let curView = "home";
+function nav(v, opts){
+  if(!VIEWS.includes(v)) v = "home";
+  curView = v;
+  VIEWS.forEach(x=>{
+    const n = el("view" + x.charAt(0).toUpperCase() + x.slice(1));
+    if(n) n.classList.toggle("on", x===v);
+  });
+  if(location.hash.slice(1) !== v) history.replaceState(null,"","#"+v);
+  window.scrollTo(0,0);
+  hidePop();
+  if(v==="home") loadHomeCount();
+  if(v==="list") loadList();
+  if(v==="new" && !(opts&&opts.keep)) prefillNew();
+  if(v==="plan"){ render(); refreshWho(); refreshIdBar(); }
+}
+document.addEventListener("click", e=>{
+  const n = e.target.closest("[data-nav]");
+  if(n){ nav(n.dataset.nav); }
+});
+window.addEventListener("hashchange", ()=>{ const v=location.hash.slice(1); if(v && v!==curView) nav(v); });
+
+/* ---- 首頁 ---- */
+async function loadHomeCount(){
+  const c = el("browseCount"); if(!c) return;
+  c.textContent = "讀取中…";
+  try{ const l = await store.list(); c.textContent = l.length ? `目前有 ${l.length} 份` : "目前還沒有人存過"; }
+  catch(e){ c.textContent = "點進去看看"; }
+}
+el("goBrowse").addEventListener("click", ()=>nav("list"));
+el("goNew").addEventListener("click", ()=>nav("new"));
+
+/* ---- 已儲存的課表（整頁） ---- */
+let lsPlans = [], lsQ = "";
+const SRCNAME = { repo:"公開", cloud:"雲端", local:"本機" };
+function lsRender(){
+  const q = lsQ.trim().toLowerCase();
+  const rows = lsPlans.filter(p => !q ||
+    (p.name||"").toLowerCase().includes(q) || String(p.sid||"").toLowerCase().includes(q));
+  el("listSub").textContent = lsPlans.length ? `共 ${lsPlans.length} 份` : "";
+  el("lsList").innerHTML = rows.length ? rows.map(p=>{
+    const d = new Date(p.updatedAt||0);
+    const when = (!p.updatedAt || isNaN(d)) ? "" :
+      `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+    return `<div class="pl-row">
+      <div class="pl-main">
+        <div class="pl-nm">${esc(p.name||"（未命名）")}${p.hasPin?' <span class="lock" title="有密碼">🔒</span>':""}
+          <span class="src-tag ${p.source}">${SRCNAME[p.source]||""}</span></div>
+        <div class="pl-mt">${p.sid?`<span>${esc(String(p.sid))}</span>`:""}
+          <span>${p.cohort||"—"} 級</span>
+          <span>已修 ${fmt(p.done||0)}　${PLAN_LABEL} ${fmt(p.plan||0)}</span>
+          ${when?`<span>${when}</span>`:""}</div>
+      </div>
+      <div class="acts">
+        <button class="btn" data-load="${p.id}">打開</button>
+        ${p.source==="repo" ? "" : `<button class="btn" data-del="${p.id}">刪除</button>`}
+      </div></div>`;
+  }).join("") : `<div class="pl-empty">${lsPlans.length ? "沒有符合的姓名或學號"
+      : "還沒有人存過課表。<br>回首頁按「新增自己的課表」開始第一份。"}</div>`;
+}
+async function loadList(){
+  lsQ = ""; el("lsQ").value = "";
+  el("listSub").textContent = "讀取中…";
+  el("lsList").innerHTML = `<div class="pl-empty">讀取中…</div>`;
+  try{ lsPlans = await store.list(); lsRender(); }
+  catch(err){ el("lsList").innerHTML = `<div class="pl-empty">讀不到清單：${esc(err.message||"連線失敗")}</div>`; }
+}
+el("lsQ").addEventListener("input", e=>{ lsQ = e.target.value; lsRender(); });
+el("lsList").addEventListener("click", async e=>{
+  const ld = e.target.closest("[data-load]"), dl = e.target.closest("[data-del]");
+  if(!ld && !dl) return;
+  const id = (ld||dl).dataset.load || (ld||dl).dataset.del;
+  const meta = lsPlans.find(p=>p.id===id);
+  let pin = null;
+  if(meta && meta.hasPin){
+    pin = await askPin(ld ? `打開「${meta.name}」的課表` : `刪除「${meta.name}」的課表`);
+    if(pin === null) return;
+  }
+  try{
+    if(ld){
+      const rec = await store.get(id, pin);
+      applySnapshot(rec.data ? rec.data : rec);
+      if(!state.profile) state.profile = { name: rec.name || (meta&&meta.name) || "", sid:(meta&&meta.sid)||"", cohort: state.cohort };
+      state.savedAs = String(id).startsWith("repo:") ? null : { id: rec.id || id, name: rec.name || (meta&&meta.name) || "" };
+      save(); nav("plan");
+      setChip(String(id).startsWith("repo:") ? "已開啟公開課表" : "已載入 ✓", false);
+    } else {
+      if(!confirm(`確定要刪掉「${meta?meta.name:""}」這筆課表嗎？刪了救不回來。`)) return;
+      await store.del(id, pin);
+      if(state.savedAs && state.savedAs.id === id){ state.savedAs = null; save(); }
+      lsPlans = await store.list(); lsRender();
+    }
+  }catch(err){ alert(err.message || "操作失敗"); }
+});
+
+/* ---- 新增自己的課表 ---- */
+function prefillNew(){
+  const p = state.profile || {};
+  el("nfName").value = p.name || "";
+  el("nfSid").value  = p.sid || "";
+  el("nfCohort").value = p.cohort || "";
+  el("nfPin").value = "";
+  el("nfErr").textContent = "";
+  setTimeout(()=>el("nfName").focus(), 60);
+}
+el("nfGo").addEventListener("click", ()=>{
+  const name = el("nfName").value.trim();
+  const sid  = el("nfSid").value.trim();
+  const coh  = parseInt(el("nfCohort").value, 10);
+  const pin  = el("nfPin").value.trim();
+  if(!name){ el("nfErr").textContent = "請填姓名"; el("nfName").focus(); return; }
+  if(!sid){ el("nfErr").textContent = "請填學號"; el("nfSid").focus(); return; }
+  if(!coh || coh < 100 || coh > 130){ el("nfErr").textContent = "入學學年度請填民國年，例如 113"; el("nfCohort").focus(); return; }
+  if(pin && !/^\d{4}$/.test(pin)){ el("nfErr").textContent = "密碼要剛好 4 位數字，不設就留空"; return; }
+  state.profile = { name, sid, cohort: coh, pin };
+  state.cohort = coh;
+  state.place = {}; state.cat = {}; state.doneOv = {}; state.custom = []; state.check = {};
+  state.savedAs = null;
+  try{ localStorage.removeItem("ntua-fa-guide-off"); }catch(e){}
+  save(); nav("plan"); showGuide(true);
+});
+
+/* ---- 課表頁的身分列與引導 ---- */
+function refreshIdBar(){
+  const p = state.profile;
+  el("planTitle").textContent = p && p.name ? `${p.name} 的修課盤` : "美術碩專修課盤";
+  el("idBar").innerHTML = p
+    ? `${p.sid?`<span>學號 <b>${esc(p.sid)}</b></span>`:""}<span>入學 <b>${p.cohort||state.cohort}</b> 學年度</span>
+       <span>美術學系 碩士在職專班</span>`
+    : `<span>國立臺灣藝術大學 美術學系 碩士在職專班 · 依 113 學年度課程科目表</span>`;
+  const g = el("gYears"); if(g) g.textContent = YEARS_SPAN;
+}
+function showGuide(force){
+  let off = false;
+  try{ off = localStorage.getItem("ntua-fa-guide-off") === "1"; }catch(e){}
+  el("guideBox").hidden = force ? false : off;
+}
+el("guideX").addEventListener("click", ()=>{
+  el("guideBox").hidden = true;
+  try{ localStorage.setItem("ntua-fa-guide-off","1"); }catch(e){}
+});
 
 const dashEl = document.querySelector(".dash");
 const setDashH = () => document.documentElement.style.setProperty("--dashH", dashEl.offsetHeight+"px");
