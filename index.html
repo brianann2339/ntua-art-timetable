@@ -494,7 +494,7 @@ dialog:not([open]){display:none!important}
   <div class="pk-list" id="pkList"></div>
   <div class="pk-foot">
     <span class="hint">已經選過的課不會再出現</span>
-    <button class="btn" id="btnAdd" style="margin-left:auto">＋ 自訂課程</button>
+    <button class="btn" id="btnAdd" style="margin-left:auto">＋ 找不到？自訂一門</button>
   </div>
 </dialog>
 
@@ -918,11 +918,14 @@ function onDocDown(e){ if(menuEl && !menuEl.contains(e.target)) closeMenu(); }
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeMenu(); });
 
 /* ===== 自訂課程 ===== */
-let editing=null;
+let editing=null, addTarget=null;
 function openDlg(id){
-  editing = id||null;
+  editing = id || null;
+  addTarget = (!id && isSem(ui.target)) ? ui.target : null;
   const c = id ? baseById(id) : null;
-  el("dlgTitle").textContent = c ? "編輯課程" : "自訂課程";
+  el("dlgTitle").textContent = c ? "編輯課程"
+    : (addTarget ? `新增課程 → ${semLabel(addTarget)}` : "自訂課程");
+  el("dlgOk").textContent = c ? "儲存" : (addTarget ? "加入" : "新增");
   el("fName").value=c?c.name:""; el("fName").style.borderColor="";
   el("fCode").value=c?(c.code==="—"?"":c.code):"";
   el("fCr").value=c?c.cr:3; el("fCat").value=c?c.cat:"CRO"; el("fGrp").value=c?c.grp:"—";
@@ -944,8 +947,16 @@ el("dlgOk").addEventListener("click", ()=>{
   } else {
     o.id = "c"+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
     state.custom.push(o);
+    if(addTarget){
+      if(o.yl){ state.place[o.id+"#1"] = addTarget; state.place[o.id+"#2"] = nextSem(addTarget); }
+      else     { state.place[o.id] = addTarget; }
+    }
   }
-  el("dlgAdd").close(); render(); save();
+  const placed = addTarget;
+  el("dlgAdd").close();
+  if(placed) el("dlgPick").close();
+  render(); save();
+  if(placed) setChip("已加入 ✓", false);
 });
 el("dlgDel").addEventListener("click", ()=>{
   if(!editing) return;
