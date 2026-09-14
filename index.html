@@ -139,7 +139,8 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;
 .meter[data-mk].hot{border-color:var(--accent)}
 .pop{position:fixed;z-index:800;background:var(--surface);border:1px solid var(--line);border-radius:11px;
   box-shadow:0 18px 44px -14px rgba(0,0,0,.45);padding:11px 13px;width:min(330px,calc(100vw - 24px));
-  font-size:12.5px;line-height:1.5;max-height:min(60vh,420px);overflow-y:auto}
+  font-size:12.5px;line-height:1.5;max-height:min(72vh,560px);overflow-y:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
 .pop h4{margin:0;font-size:13px;font-family:var(--f-disp);display:flex;align-items:baseline;gap:8px}
 .pop h4 em{font-style:normal;margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
 .pop .grp{margin-top:9px}
@@ -1225,7 +1226,7 @@ el("dlgList").addEventListener("click", async e=>{
 
 
 /* ================= 類別／學群 明細浮動視窗 ================= */
-let lastTally = null, popEl = null, popKey = null;
+let lastTally = null, popEl = null, popKey = null, popTimer = null;
 
 function popItems(mk){
   if(!lastTally) return null;
@@ -1272,20 +1273,26 @@ function popHTML(mk){
 }
 function showPop(meter){
   const mk = meter.dataset.mk; if(!mk) return;
+  clearTimeout(popTimer);
   if(popKey === mk && popEl) return;
   hidePop();
   const el2 = document.createElement("div");
   el2.className = "pop"; el2.innerHTML = popHTML(mk);
   document.body.appendChild(el2);
   const r = meter.getBoundingClientRect(), pr = el2.getBoundingClientRect();
-  let left = r.left, top = r.bottom + 8;
+  let left = r.left, top = r.bottom + 4;
   if(left + pr.width > innerWidth - 10) left = innerWidth - pr.width - 10;
   if(left < 10) left = 10;
-  if(top + pr.height > innerHeight - 10) top = Math.max(10, r.top - pr.height - 8);
+  if(top + pr.height > innerHeight - 10) top = Math.max(10, r.top - pr.height - 4);
   el2.style.left = left + "px"; el2.style.top = top + "px";
   popEl = el2; popKey = mk; meter.classList.add("hot");
 }
+function hidePopSoon(){
+  clearTimeout(popTimer);
+  popTimer = setTimeout(hidePop, 180);
+}
 function hidePop(){
+  clearTimeout(popTimer);
   if(popEl){ popEl.remove(); popEl = null; }
   popKey = null;
   document.querySelectorAll(".hot").forEach(m=>m.classList.remove("hot"));
@@ -1293,7 +1300,9 @@ function hidePop(){
 document.addEventListener("pointerover", e=>{
   if(e.pointerType === "touch") return;
   const m = e.target.closest && e.target.closest("[data-mk]");
-  if(m) showPop(m); else if(!(e.target.closest && e.target.closest(".pop"))) hidePop();
+  if(m){ showPop(m); return; }
+  if(e.target.closest && e.target.closest(".pop")){ clearTimeout(popTimer); return; }
+  hidePopSoon();
 });
 document.addEventListener("pointerdown", e=>{
   const m = e.target.closest && e.target.closest("[data-mk]");
@@ -1304,7 +1313,11 @@ document.addEventListener("focusin", e=>{
   const m = e.target.closest && e.target.closest("[data-mk]");
   if(m) showPop(m);
 });
-window.addEventListener("scroll", hidePop, true);
+window.addEventListener("scroll", e=>{
+  const t = e.target;
+  if(popEl && t && t.nodeType === 1 && popEl.contains(t)) return;   // 在浮動視窗裡捲動 → 不關
+  hidePop();
+}, true);
 window.addEventListener("resize", hidePop);
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") hidePop(); });
 
